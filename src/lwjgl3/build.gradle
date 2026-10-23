@@ -1,0 +1,36 @@
+// Desktop launcher (LWJGL3). Run with: ./gradlew lwjgl3:run
+apply plugin: 'application'
+
+application {
+  mainClass = 'com.cupids.curseoftheforest.lwjgl3.Main'
+  applicationName = 'curseoftheforest'
+}
+
+// Ship the shared assets folder inside the jar and use it as the working directory for "run".
+sourceSets.main.resources.srcDirs += [rootProject.file('assets').path]
+
+dependencies {
+  implementation project(':core')
+  implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+  implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+}
+
+run {
+  workingDir = rootProject.file('assets').path
+  // macOS needs the GLFW window on the first thread.
+  if (System.getProperty('os.name').toLowerCase().contains('mac')) {
+    jvmArgs += '-XstartOnFirstThread'
+  }
+}
+
+// Runnable fat jar: ./gradlew lwjgl3:jar -> lwjgl3/build/libs/curseoftheforest-<version>.jar
+jar {
+  archiveBaseName.set('curseoftheforest')
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  dependsOn configurations.runtimeClasspath
+  from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+  exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+  manifest {
+    attributes 'Main-Class': application.mainClass
+  }
+}

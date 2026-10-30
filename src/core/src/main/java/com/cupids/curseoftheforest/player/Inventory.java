@@ -24,7 +24,7 @@ public class Inventory {
         return items.contains(item);
     }
 
-    /** Read-only view so callers cannot change the list without going through add/remove. */
+    /** Read-only live view: later add/remove calls are reflected in the returned list. */
     public List<Item> getAll() {
         return Collections.unmodifiableList(items);
     }

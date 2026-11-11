@@ -136,7 +136,7 @@ Update by ticking boxes in a PR (or at each integration on Saturday).
 
 ### Reset
 
-- [ ] Jai approves option (A / B / C)
+- [x] Jai approves option C, skeleton reset (2026-11-11)
 - [ ] Tag `baseline-2026-10-23` pushed
 - [ ] Skeleton-reset PR opened
 - [ ] Skeleton-reset PR reviewed and merged
@@ -183,7 +183,7 @@ Update by ticking boxes in a PR (or at each integration on Saturday).
 
 | Date | Entry |
 |---|---|
-| 2026-11-11 | Plan drafted. Awaiting Jai's decision on the reset option and the open questions. |
+| 2026-11-11 | Plan drafted. Jai chose option C (skeleton reset). Awaiting answers on Saturday hours, ownership and go-ahead for the tag and skeleton PR. |
 
 ---
 

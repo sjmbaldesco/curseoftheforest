@@ -121,6 +121,7 @@ Rules for the day: pull `main` after each integration; if blocked on another per
 `AGENTS.md` (merged in PR #1) applies. In short:
 
 - **Never push to `main`.** One branch per task: `jairus/tilemap`, `johndel/player-movement`, `phebe/hud`.
+- **AI assistants never push.** Your AI tool may edit files and suggest commits, but you review the change and push it yourself. The rule is in `AGENTS.md`, so Codex/Claude follow it automatically.
 - **Commit as yourself** (your own git name and email). One logical change per commit, imperative message. AI help is allowed, but the commit is yours and you must be able to explain it.
 - **Review rotation:** Jai's PRs → Johndel reviews; Johndel's → Phebe; Phebe's → Jai. The reviewer runs `gradlew test` and the game before approving.
 - `./gradlew test` must pass before every PR.

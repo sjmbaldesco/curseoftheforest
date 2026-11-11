@@ -85,6 +85,8 @@ Add short comments only where the reason is not obvious, matching the existing c
 
 ## Branches, commits, PRs
 
+**AI agents never push.** Do not run `git push`, open or merge pull requests, create tags, or change branches on GitHub on your own. Make your changes in the working tree (and local commits, if the member asks), then stop and tell the member what to review. The member in charge of the task reads the change, commits it as themselves, and pushes it. This keeps every commit in the history one the member has checked and can explain.
+
 - Never push to `main`. Create a branch per task (e.g. `jairus/stage-timer-bonus`), open a pull request to `main`, and let another member review it before merging.
 - One logical change per commit, with a clear imperative message. The instructor reviews each member's commit history, so commit as the member doing the work and avoid bulk or meaningless commits.
 - Keep `README.md` (structure, OOP table, map contract) in sync when your change affects it.

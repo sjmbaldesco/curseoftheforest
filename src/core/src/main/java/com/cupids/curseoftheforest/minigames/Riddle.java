@@ -2,19 +2,22 @@ package com.cupids.curseoftheforest.minigames;
 
 /**
  * One of the Nuno's riddles and the food that answers it.
- * TODO(Johndel): stub from the UML.
+ * Answers ignore case and surrounding whitespace.
  */
 public class Riddle {
     private final String question;
     private final String answer;
 
     public Riddle(String question, String answer) {
+        if (question == null || question.isBlank() || answer == null || answer.isBlank()) {
+            throw new IllegalArgumentException("A riddle needs a question and answer.");
+        }
         this.question = question;
         this.answer = answer;
     }
 
     public boolean isCorrect(String guess) {
-        throw new UnsupportedOperationException("TODO(Johndel)");
+        return guess != null && answer.strip().equalsIgnoreCase(guess.strip());
     }
 
     public String getQuestion() {

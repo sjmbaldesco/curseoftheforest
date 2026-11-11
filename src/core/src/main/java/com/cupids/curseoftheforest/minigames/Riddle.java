@@ -14,7 +14,7 @@ public class Riddle {
     }
 
     public boolean isCorrect(String guess) {
-        throw new UnsupportedOperationException("TODO(Johndel)");
+    	return answer.equals(guess);
     }
 
     public String getQuestion() {

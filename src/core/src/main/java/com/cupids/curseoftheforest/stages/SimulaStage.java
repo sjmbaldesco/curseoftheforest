@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.cupids.curseoftheforest.ForestGame;
+import com.cupids.curseoftheforest.creatures.LolaPacita;
 
 /** Stage 1: repeat the color sequence before leaving the map. */
 public class SimulaStage extends GameStage {
@@ -20,6 +21,7 @@ public class SimulaStage extends GameStage {
     private static final Color BUBBLE_PAPER = Color.valueOf("FFF3D8");
     private static final float SECONDS_PER_COLOR = 1.2f;
     private final Color previousFontColor = new Color();
+    private final LolaPacita lolaPacita = new LolaPacita(0, 0);
     private Texture bubblePixel;
     private float previewTime;
     private int matched;
@@ -74,6 +76,9 @@ public class SimulaStage extends GameStage {
 
         matched++;
         solved = matched == PATTERN.length;
+        if (solved) {
+            lolaPacita.interact(player);
+        }
         feedback = "";
     }
 
@@ -122,7 +127,7 @@ public class SimulaStage extends GameStage {
         float textLeft = left + 16;
         font.setColor(BUBBLE_INK);
         font.getData().setScale(1.4f);
-        font.draw(batch, "Lola Pacita", textLeft, top - 12);
+        font.draw(batch, lolaPacita.getName(), textLeft, top - 12);
         font.getData().setScale(1.15f);
         if (isPreviewing()) {
             int index = (int) (previewTime / SECONDS_PER_COLOR);
@@ -134,7 +139,8 @@ public class SimulaStage extends GameStage {
             font.draw(batch, (index + 1) + "/" + PATTERN.length + "  "
                     + COLORS[colorIndex], textLeft + 33, top - 67);
         } else if (solved) {
-            font.draw(batch, "Well done, Dayo! You may head to the exit.", textLeft, top - 42);
+            font.draw(batch, "Well done, Dayo! Take this Rosary and Lumang Gitara.", textLeft, top - 42);
+            font.draw(batch, "Both items are in your inventory. Head to the exit.", textLeft, top - 66);
         } else {
             font.draw(batch, "Your turn. Repeat the colors in order.", textLeft, top - 39);
             font.draw(batch, "1 Red     2 Green     3 Blue     E Replay", textLeft, top - 63);

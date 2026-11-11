@@ -1,16 +1,26 @@
 package com.cupids.curseoftheforest.creatures;
 
+import com.cupids.curseoftheforest.items.Accessory;
+import com.cupids.curseoftheforest.player.Inventory;
 import com.cupids.curseoftheforest.player.Player;
 
-/** Lola Pacita: gives the Rosary and the Lumang Gitara. TODO(Johndel): stub from the UML. */
+/** Gives Dayo the Rosary and the Lumang Gitara. */
 public class LolaPacita extends Creature {
+    private static final Accessory ROSARY = new Accessory("Rosary", 0, "A gift from Lola Pacita.", 0);
+    private static final Accessory GITARA = new Accessory("Lumang Gitara", 0, "Dayo's guitar for the serenade.", 0);
 
     public LolaPacita(float x, float y) {
         super("Lola Pacita", x, y);
     }
 
     @Override
-    public void interact(Player p) {
-        // TODO(Johndel): gives the Rosary and the Lumang Gitara.
+    public void interact(Player player) {
+        Inventory inventory = player.getInventory();
+        if (!inventory.has(ROSARY)) {
+            inventory.add(ROSARY);
+        }
+        if (!inventory.has(GITARA)) {
+            inventory.add(GITARA);
+        }
     }
 }

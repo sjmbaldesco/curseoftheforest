@@ -2,7 +2,6 @@ package com.cupids.curseoftheforest.minigames;
 
 /**
  * One of the Nuno's riddles and the food that answers it.
- * TODO(Johndel): stub from the UML.
  */
 public class Riddle {
     private final String question;
@@ -14,7 +13,7 @@ public class Riddle {
     }
 
     public boolean isCorrect(String guess) {
-    	return answer.equals(guess);
+        return answer.equals(guess);
     }
 
     public String getQuestion() {

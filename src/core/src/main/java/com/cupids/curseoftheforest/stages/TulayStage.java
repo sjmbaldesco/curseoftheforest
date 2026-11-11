@@ -24,8 +24,7 @@ public class TulayStage extends GameStage {
 
     @Override
     protected void init() {
-        boolean hasJuice = player.getInventory().getAll().stream()
-                .anyMatch(item -> "Malunggay Juice".equals(item.getName()));
+        boolean hasJuice = player.getInventory().has("Malunggay Juice");
         timer = new StageTimer(hasJuice ? JUICE_SECONDS : BASE_SECONDS);
         Rectangle exit = tileMap.getExit();
         nuno = new Nuno(exit.x, exit.y);

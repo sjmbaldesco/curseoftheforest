@@ -22,12 +22,17 @@ public class Nuno extends Creature {
 
     @Override
     public void interact(Player player) {
+        java.util.Objects.requireNonNull(player, "player");
         started = true;
     }
 
     public boolean hasStarted() {
         return started;
     }
+
+    public boolean isGreeted() { return hasStarted(); }
+
+    public int getAnsweredCount() { return answered; }
 
     public String getQuestion() {
         return started && !isComplete() ? riddles[answered].getQuestion() : "";

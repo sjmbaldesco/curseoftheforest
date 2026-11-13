@@ -24,7 +24,20 @@ public class Inventory {
         return items.contains(item);
     }
 
-    /** Read-only view so callers cannot change the list without going through add/remove. */
+    /** Checks for an item with the given exact name. */
+    public boolean has(String itemName) {
+        if (itemName == null) {
+            return false;
+        }
+        for (Item item : items) {
+            if (item != null && itemName.equals(item.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Read-only live view: later add/remove calls are reflected in the returned list. */
     public List<Item> getAll() {
         return Collections.unmodifiableList(items);
     }

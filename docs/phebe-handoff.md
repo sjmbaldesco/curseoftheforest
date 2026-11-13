@@ -2,30 +2,32 @@
 
 Implemented against the local baseline on 2026-11-11, on branch `phebe`.
 The user's new Reset Plan ownership supersedes the older table in AGENTS.md for this work.
-No skeleton reset, pushes, or edits to Jai's/Johndel's implementation were made. Changes are committed locally on `phebe` at Phebe's request.
+Phebe requested local commits, a push to `phebe`, and a reviewed pull request into `main`.
+On 2026-11-13, main was merged into this branch without rewriting either member's commits.
+No skeleton reset or direct changes to main were made.
 
 ## Implemented
 
 - AssetLoader: validates paths, caches missing-image fallbacks, logs load failures once per path, disposes resources once.
 - Creature: abstract interaction contract, proximity check, shared sprite-sheet animation.
-- Nuno: records the greeting; Mangkukulam: creates exactly one duel per encounter.
+- Nuno: retains Johndel's questions and one-time potion rewards, with greeting and progress accessors for the stage UI; Mangkukulam creates exactly one duel per encounter.
 - Hud: Courage/Sanity text meters (red at 25 or below), coins, countdown, bounded item-name list.
 - MenuText: shared screen projection and centered text that preserves the font's previous scale.
 - CutScene: copied dialogue arrays, Enter/Space advancement, completion state, owned rendering resources and borrowed background textures.
 - Draft intro, both flashbacks, serenade and ending text. Flashbacks play in their respective stages; serenade/ending play after winning the duel and reaching the exit.
 - TulayStage: greet Nuno with E while nearby, answer with 1/2/3, earn one potion per correct answer, lose 10 Sanity on a wrong answer. All three correct answers and the exit are required.
-- Tulay timer: 180 seconds, or 300 while carrying an item named Malunggay Juice. Uses existing Inventory.getAll(); does not require Johndel's proposed has(String) method.
+- Tulay timer: 180 seconds, or 300 while carrying Malunggay Juice. Uses Johndel's Inventory.has(String).
 - PotionDuel/PotionType: STUN beats DAMAGE; DAMAGE beats HEAL; HEAL beats STUN. The enemy telegraphs its next choice.
 - MangkukulamStage: duel, result handling, flashback, serenade, ending, retry-compatible inventory use.
 - Two playable 32-pixel Tiled maps with supplied background images, collision floor, coin and spawn/exit markers.
-- Nine new unit tests, plus runtime smoke testing and two captured screens.
+- Ten new unit tests, plus runtime smoke testing and captured screens.
 
 ## Team decisions to review
 
 The log does not specify riddle wording, exact duel damage/health rules, or final dialogue.
 These are explicit draft defaults, not claims about the approved story:
 
-- Three original food riddles: Buko, Suman, Saging. Answers ignore case and surrounding whitespace.
+- Johndel's three food riddles are preserved: Sampalok, Atis, Kalabasa. Keys remain 1 Atis, 2 Sampalok, 3 Kalabasa; correct sequence is 2, 1, 3. Answers ignore case and surrounding whitespace.
 - Rewards follow enum order: STUN, DAMAGE, HEAL.
 - Dayo health = ceil((Courage + Sanity) / 50), minimum 1. Enemy health = 3.
 - Winning a round deals 2 damage to the loser. Ties spend the potion without damage.
@@ -50,7 +52,7 @@ If the reset changes the GameStage API, preserve init(), update(float), handleIn
 protected player/game/timer, and the completion/failure flags or adapt these two subclasses in review.
 Do not add another ending transition in ForestGame: Stage 5 already plays the serenade and ending before its completion callback.
 
-The baseline's first three stages are still placeholders owned by the other members.
+Main now includes Johndel's Stage 1 pattern/rewards and Stage 2 chase/shop. Stage 3 remains a placeholder.
 This is Phebe's implementation, not a claim that the whole campaign is finished.
 
 ## README/AGENTS changes proposed for Jai's integration PR
@@ -84,6 +86,12 @@ Do not add those unrelated files accidentally when staging this work.
 
 ## Validation
 
+2026-11-13 after integrating main at 5c185a4:
+- Fresh Java 21 build: PASS, 20 tests, 0 failures; desktop jar built successfully.
+- Used ../.tools/verify-merge.gradle to direct build output to a fresh directory because the existing OneDrive build folder could not be cleaned.
+- LWJGL3 smoke test: PASS, including Stage 1/2 screen-space overlays after camera movement, Johndel's riddle sequence, single potion rewards, retry, duel and ending.
+- Updated screenshots/phebe-tulay.png and screenshots/phebe-duel.png; added screenshots/phebe-merged-simula.png for overlay compatibility.
+
 2026-11-11, Windows, Temurin JDK 21.0.13:
 - gradlew.bat test lwjgl3:jar --no-daemon: PASS, 19 tests, 0 failures.
 - Invisible LWJGL3 desktop smoke test: PASS. Actual maps/images/fonts loaded and rendered.
@@ -102,13 +110,22 @@ Run from src/ with JAVA_HOME set to your JDK 21:
 ```
 
 Manual play:
-1. Cross the first three baseline maps to reach Tulay.
+1. Complete Stage 1's pattern, Stage 2's chase/shop, and cross Stage 3 to reach Tulay.
 2. Advance the flashback with Enter. Walk near Nuno; E starts the encounter.
 3. Choose offerings with 1/2/3. Try one incorrect answer, then solve all three.
 4. Cross to the right exit, advance Flashback 2, approach the witch and press E.
 5. Counter the displayed enemy potion using 1/2/3. Walk to the exit after winning.
 6. Advance the serenade and ending. Also verify a loss and R retry.
-7. Check the 300-second timer with a Malunggay Juice in the entry inventory once the shop is implemented.
+7. Check the 300-second timer with Malunggay Juice bought in Stage 2.
+
+## Main integration resolution (2026-11-13)
+
+- Nuno keeps the main-branch riddle/reward model; Tulay delegates to offer() instead of awarding duplicate potions.
+- Riddle keeps constructor validation and whitespace/case-insensitive answers.
+- Tulay keeps Phebe's real map, animated sprite, flashback, nearby interaction, wrong-answer penalty, and exit goal.
+- Hud leaves the batch in screen space as Johndel's earlier stages expect. Its beginWorld() method restores the saved camera for Phebe's creature sprites.
+- Inventory text moves to the bottom to avoid Stage 1's dialogue bubble.
+- Original Phebe commits and all incoming main commits remain in history; use a merge commit when reviewing the PR to retain them.
 
 ## PR description / OOP defense
 

@@ -101,7 +101,7 @@ public class MangkukulamStage extends GameStage {
         super.render(delta);
         if (game.getScreen() != this || scene != null) return;
         SpriteBatch batch = game.getBatch();
-        batch.begin();
+        hud.beginWorld(batch);
         witch.render(batch);
         batch.end();
         MenuText.begin(batch);

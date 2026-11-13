@@ -16,6 +16,7 @@ public class Hud {
     private final StageTimer timer;
     private final BitmapFont font;
     private final String stageName;
+    private final Matrix4 worldProjection = new Matrix4();
     private final Matrix4 screen = new Matrix4().setToOrtho2D(0, 0, ForestGame.WORLD_WIDTH, ForestGame.WORLD_HEIGHT);
 
     public Hud(Player player, StageTimer timer, BitmapFont font, String stageName) {
@@ -26,7 +27,7 @@ public class Hud {
     }
 
     public void render(SpriteBatch batch) {
-        Matrix4 previous = new Matrix4(batch.getProjectionMatrix());
+        worldProjection.set(batch.getProjectionMatrix());
         Color color = new Color(font.getColor());
         batch.setProjectionMatrix(screen);
         batch.begin();
@@ -49,10 +50,16 @@ public class Hud {
             items.append(item.getName());
         }
         if (count == 0) items.append("none");
-        font.draw(batch, items.toString(), 16, 475, 920, Align.left, true);
+        font.draw(batch, items.toString(), 16, 40, 920, Align.left, true);
         batch.end();
         font.setColor(color);
-        batch.setProjectionMatrix(previous);
+        // Earlier stages draw their overlays next and expect screen coordinates.
+    }
+
+    /** Stages with creature sprites can resume the camera used before the HUD. */
+    public void beginWorld(SpriteBatch batch) {
+        batch.setProjectionMatrix(worldProjection);
+        batch.begin();
     }
 
     private void meter(SpriteBatch batch, String label, int value, float x) {

@@ -3,8 +3,7 @@ package com.cupids.curseoftheforest.items;
 import com.cupids.curseoftheforest.player.Player;
 
 /**
- * Single-use item, such as the Malunggay Juice.
- * TODO(Johndel): stub from the UML.
+ * Single-use item that restores Courage, such as Malunggay Juice.
  */
 public class Consumable extends Item {
     private final int effectAmount;
@@ -15,8 +14,10 @@ public class Consumable extends Item {
     }
 
     @Override
-    public void use(Player p) {
-        // TODO(Johndel): apply the effect and remove the item from the inventory.
+    public void use(Player player) {
+        if (player.getInventory().remove(this)) {
+            player.changeCourage(effectAmount);
+        }
     }
 
     public int getEffectAmount() {

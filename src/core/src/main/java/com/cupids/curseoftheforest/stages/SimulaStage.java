@@ -29,7 +29,7 @@ public class SimulaStage extends GameStage {
     private String feedback;
 
     public SimulaStage(ForestGame game) {
-        super(game, "Stage 1: Ang Simula", "maps/test.tmx");
+        super(game, "Stage 1: Ang Simula", "maps/simula.tmx");
     }
 
     @Override

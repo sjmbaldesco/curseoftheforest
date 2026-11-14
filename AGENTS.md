@@ -17,8 +17,8 @@
 
 ## Ownership
 - Jairus: `ForestGame`, `Player`, `TileMap`, `GameStage`, `StageTimer`, main-menu and game-over screens and their helpers.
-- Johndel: `Inventory`; `creatures/`, `items/`, `minigames/` classes (including `Shop`, `InsufficientCoinsException`, `Riddle`, `PotionDuel`, `PotionType`); mini-game mechanics in the five concrete stages.
-- Phebe: `AssetLoader`, `CutScene`, `Hud`, Tiled maps and pixel art, UML, tests, README and presentation.
+- Johndel: `Inventory`; `items/` classes, `Shop`, `InsufficientCoinsException`; creatures `LolaPacita`, `DuwendeTonyo`, `Wakwak`, `Tikbalang`; mini-game mechanics in Stages 1–3.
+- Phebe: `AssetLoader`, `CutScene`, `Hud`, the abstract `Creature` base, Stage 4 (`TulayStage`, `Nuno`, `Riddle`) and Stage 5 (`MangkukulamStage`, `Mangkukulam`, `PotionDuel`, `PotionType`), Tiled maps and pixel art, UML, tests, README and presentation.
 - Identify the requesting member before editing owned files. This setup is for Johndel.
 - Never rewrite another member's classes. Ask for explicit permission before editing files outside the requesting member's ownership; ask about ambiguous ownership first.
 - Leave `TODO(name)` stubs untouched unless the requesting member owns that class and the requested change calls for implementing them.
@@ -96,8 +96,8 @@ Each member must defend their own classes, so respect ownership.
 | Owner | Classes |
 |---|---|
 | Jairus (@sjmbaldesco) | `ForestGame`, `Main`, `Player`, `TileMap` and collision, `GameStage` and stage transitions, `StageTimer`, `Checkpoint`, `MainMenuScreen`, `GameOverScreen` |
-| Johndel (@jdvoid) | `Creature` hierarchy, `Item` hierarchy, `Inventory`, `Shop`, `InsufficientCoinsException`, `Riddle`, `PotionDuel`, `PotionType`, the mini-game logic inside the five stage subclasses |
-| Phebe (@phiiibibii) | `CutScene` and dialogue, `Hud`, `AssetLoader`, Tiled maps and pixel art, input validation checks, tests and evidence, README, UML |
+| Johndel (@jdvoid) | `Item` hierarchy, `Inventory`, `Shop`, `InsufficientCoinsException`, `LolaPacita`, `DuwendeTonyo`, `Wakwak`, `Tikbalang`, the mini-game logic in Stages 1–3 (`SimulaStage`, `PalengkeStage`, `GubatStage`) |
+| Phebe (@phiiibibii) | `Creature` (abstract base), Stage 4 `TulayStage` + `Nuno` + `Riddle`, Stage 5 `MangkukulamStage` + `Mangkukulam` + `PotionDuel` + `PotionType`, `CutScene` and dialogue, `Hud`, `AssetLoader`, Tiled maps and pixel art, input validation checks, tests and evidence, README, UML |
 
 Rules:
 

@@ -3,8 +3,7 @@ package com.cupids.curseoftheforest.items;
 import com.cupids.curseoftheforest.player.Player;
 
 /**
- * Item kept and worn for a lasting effect: Rosary, Agimat ni Enteng, Kwerdas ng Gitara.
- * TODO(Johndel): stub from the UML.
+ * Item with a passive effect while carried, such as the Rosary.
  */
 public class Accessory extends Item {
     private final int effectAmount;
@@ -16,7 +15,7 @@ public class Accessory extends Item {
 
     @Override
     public void use(Player p) {
-        // TODO(Johndel): apply the accessory's effect.
+        // Stages check the player's inventory when applying passive effects.
     }
 
     public int getEffectAmount() {

@@ -16,9 +16,10 @@
 - Preserve this contract; see `src/assets/maps/test.tmx`.
 
 ## Ownership
+- Each stage owner builds that stage end to end, including its Tiled map in `src/assets/maps/`.
 - Jairus: `ForestGame`, `Player`, `TileMap`, `GameStage`, `StageTimer`, main-menu and game-over screens and their helpers; Stage 3 (`GubatStage`, `Tikbalang`, `GlowingBush`).
 - Johndel: `Inventory`; `items/` classes, `Shop`, `InsufficientCoinsException`; creatures `LolaPacita`, `DuwendeTonyo`, `Wakwak`; mini-game mechanics in Stages 1–2.
-- Phebe: `AssetLoader`, `CutScene`, `Hud`, the abstract `Creature` base, Stage 4 (`TulayStage`, `Nuno`, `Riddle`) and Stage 5 (`MangkukulamStage`, `Mangkukulam`, `PotionDuel`, `PotionType`), Tiled maps and pixel art, UML, tests, README and presentation.
+- Phebe: `AssetLoader`, `CutScene`, `Hud`, the abstract `Creature` base, Stage 4 (`TulayStage`, `Nuno`, `Riddle`) and Stage 5 (`MangkukulamStage`, `Mangkukulam`, `PotionDuel`, `PotionType`), pixel art, UML, tests, README and presentation.
 - Identify the requesting member before editing owned files. This setup is for Johndel.
 - Never rewrite another member's classes. Ask for explicit permission before editing files outside the requesting member's ownership; ask about ambiguous ownership first.
 - Leave `TODO(name)` stubs untouched unless the requesting member owns that class and the requested change calls for implementing them.
@@ -93,11 +94,13 @@ Every `.tmx` in `src/assets/maps/` must have:
 
 Each member must defend their own classes, so respect ownership.
 
+Each stage owner also makes that stage's Tiled map.
+
 | Owner | Classes |
 |---|---|
 | Jairus (@sjmbaldesco) | `ForestGame`, `Main`, `Player`, `TileMap` and collision, `GameStage` and stage transitions, `StageTimer`, `Checkpoint`, `MainMenuScreen`, `GameOverScreen`, Stage 3 `GubatStage` + `Tikbalang` + `GlowingBush` |
 | Johndel (@jdvoid) | `Item` hierarchy, `Inventory`, `Shop`, `InsufficientCoinsException`, `LolaPacita`, `DuwendeTonyo`, `Wakwak`, the mini-game logic in Stages 1–2 (`SimulaStage`, `PalengkeStage`), item effects (`use()` overrides) |
-| Phebe (@phiiibibii) | `Creature` (abstract base), Stage 4 `TulayStage` + `Nuno` + `Riddle`, Stage 5 `MangkukulamStage` + `Mangkukulam` + `PotionDuel` + `PotionType`, `CutScene` and dialogue, `Hud`, `AssetLoader`, Tiled maps and pixel art, input validation checks, tests and evidence, README, UML |
+| Phebe (@phiiibibii) | `Creature` (abstract base), Stage 4 `TulayStage` + `Nuno` + `Riddle`, Stage 5 `MangkukulamStage` + `Mangkukulam` + `PotionDuel` + `PotionType`, `CutScene` and dialogue, `Hud`, `AssetLoader`, pixel art, input validation checks, tests and evidence, README, UML |
 
 Rules:
 

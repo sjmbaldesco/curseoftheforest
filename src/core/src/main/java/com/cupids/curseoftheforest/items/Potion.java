@@ -5,7 +5,6 @@ import com.cupids.curseoftheforest.player.Player;
 
 /**
  * One of the Nuno's potions, spent in the Stage 5 duel.
- * TODO(Johndel): stub from the UML.
  */
 public class Potion extends Consumable {
     private final PotionType type;
@@ -17,7 +16,7 @@ public class Potion extends Consumable {
 
     @Override
     public void use(Player p) {
-        // TODO(Johndel): potions are spent through PotionDuel.
+        // PotionDuel spends potions when it resolves a round.
     }
 
     public PotionType getType() {

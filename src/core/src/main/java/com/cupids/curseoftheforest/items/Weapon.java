@@ -4,7 +4,6 @@ import com.cupids.curseoftheforest.player.Player;
 
 /**
  * Lumang Itak and Lumang Punyal. Used in Stage 3; cutSpeed shortens bush search time.
- * TODO(Johndel): stub from the UML.
  */
 public class Weapon extends Item {
     private final float cutSpeed;
@@ -16,7 +15,7 @@ public class Weapon extends Item {
 
     @Override
     public void use(Player p) {
-        // TODO(Johndel): weapons are used through GlowingBush, not directly.
+        // The Stage 3 bush search uses getCutSpeed() when applying a weapon's effect.
     }
 
     public float getCutSpeed() {

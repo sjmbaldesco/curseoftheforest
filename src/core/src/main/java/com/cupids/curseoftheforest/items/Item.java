@@ -4,7 +4,6 @@ import com.cupids.curseoftheforest.player.Player;
 
 /**
  * Something Dayo can own and use. Subclasses decide what use() does.
- * TODO(Johndel): owner of the item hierarchy.
  */
 public abstract class Item {
     private final String name;
@@ -17,6 +16,7 @@ public abstract class Item {
         this.description = description;
     }
 
+    /** Applies a direct-use effect when the item has one. */
     public abstract void use(Player p);
 
     public String getName() {

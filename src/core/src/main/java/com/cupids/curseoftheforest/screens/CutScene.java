@@ -81,6 +81,17 @@ public class CutScene extends ScreenAdapter {
     }
 
     public static String[] serenade() {
+        return serenade(false);
+    }
+
+    public static String[] serenade(boolean hasGuitarStrings) {
+        if (hasGuitarStrings) {
+            return new String[] {
+                "Dayo lifts his guitar and sings the song he practiced.",
+                "Dayo: Luningning, may I court you? Whatever your answer, I will respect it.",
+                "Luningning: Your guitar sounds beautiful, Dayo. I can tell how much you practiced."
+            };
+        }
         return new String[] {
             "Dayo lifts his guitar and sings the song he practiced.",
             "Dayo: Luningning, may I court you? Whatever your answer, I will respect it."

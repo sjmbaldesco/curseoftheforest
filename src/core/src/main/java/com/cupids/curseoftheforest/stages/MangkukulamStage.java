@@ -74,7 +74,9 @@ public class MangkukulamStage extends GameStage {
             failed = true;
         }
         if (duel.isWon() && reachedExit() && !isFailed() && sceneIndex == 1) {
-            scene = new CutScene(CutScene.serenade(), game.getAssetLoader().loadImage("images/backgrounds/ending.png"));
+            boolean hasGuitarStrings = player.getInventory().has("Kwerdas ng Gitara");
+            scene = new CutScene(CutScene.serenade(hasGuitarStrings),
+                    game.getAssetLoader().loadImage("images/backgrounds/ending.png"));
             sceneIndex = 2;
         }
     }

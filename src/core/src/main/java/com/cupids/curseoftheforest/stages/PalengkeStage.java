@@ -22,6 +22,7 @@ import java.util.List;
  */
 public class PalengkeStage extends GameStage {
     private static final int CATCH_COURAGE_LOSS = 10;
+    private static final int ROSARY_PROTECTION = 2;
     private static final float CATCH_COOLDOWN = 1.5f;
     private static final int[] SHOP_KEYS = {
             Input.Keys.NUM_1, Input.Keys.NUM_2, Input.Keys.NUM_3, Input.Keys.NUM_4, Input.Keys.NUM_5
@@ -31,6 +32,7 @@ public class PalengkeStage extends GameStage {
     private Wakwak wakwak;
     private DuwendeTonyo tonyo;
     private float catchCooldown;
+    private int courageLost;
     private boolean reachedShop;
     private String shopMessage;
 
@@ -58,7 +60,12 @@ public class PalengkeStage extends GameStage {
         wakwak.update(delta);
         catchCooldown = Math.max(0f, catchCooldown - delta);
         if (catchCooldown == 0f && wakwak.hasCaughtDayo()) {
-            player.changeCourage(-CATCH_COURAGE_LOSS);
+            int penalty = CATCH_COURAGE_LOSS;
+            if (player.getInventory().has("Rosary")) {
+                penalty -= ROSARY_PROTECTION;
+            }
+            courageLost = Math.min(player.getCourage(), penalty);
+            player.changeCourage(-courageLost);
             catchCooldown = CATCH_COOLDOWN;
         }
     }
@@ -158,7 +165,7 @@ public class PalengkeStage extends GameStage {
         font.draw(batch, "Collect coins and reach the exit. Wakwak is following you!",
                 12, ForestGame.WORLD_HEIGHT - 60);
         if (catchCooldown > 0f) {
-            font.draw(batch, "Wakwak caught you! -" + CATCH_COURAGE_LOSS + " Courage",
+            font.draw(batch, "Wakwak caught you! -" + courageLost + " Courage",
                     12, ForestGame.WORLD_HEIGHT - 82);
         }
         font.draw(batch, "< Wakwak >", wakwak.getX() - left - 50f,

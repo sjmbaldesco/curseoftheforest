@@ -18,8 +18,6 @@ import java.util.List;
 
 /**
  * Stage 2: Ang Palengke ng Duwende. Wakwak cave coin run, then Duwende Tonyo's shop.
- *
- * The coin chase uses the shared test map.
  */
 public class PalengkeStage extends GameStage {
     private static final int CATCH_COURAGE_LOSS = 10;
@@ -36,7 +34,7 @@ public class PalengkeStage extends GameStage {
     private String shopMessage;
 
     public PalengkeStage(ForestGame game) {
-        super(game, "Stage 2: Ang Palengke ng Duwende", "maps/test.tmx");
+        super(game, "Stage 2: Ang Palengke ng Duwende", "maps/palengke.tmx");
     }
 
     @Override

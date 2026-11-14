@@ -6,7 +6,7 @@ import com.cupids.curseoftheforest.player.Player;
 
 /** Gives Dayo the Rosary and the Lumang Gitara. */
 public class LolaPacita extends Creature {
-    private static final Accessory ROSARY = new Accessory("Rosary", 0, "A gift from Lola Pacita.", 0);
+    private static final Accessory ROSARY = new Accessory("Rosary", 0, "Reduces Courage lost to Wakwak by 2.", 0);
     private static final Accessory GITARA = new Accessory("Lumang Gitara", 0, "Dayo's guitar for the serenade.", 0);
 
     public LolaPacita(float x, float y) {

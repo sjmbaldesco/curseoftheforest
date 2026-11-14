@@ -5,7 +5,7 @@ import com.cupids.curseoftheforest.player.Player;
 
 /**
  * Stage 3 bush that may hide a clue piece. Searching takes less time with a sharper weapon.
- * TODO(Johndel): stub from the UML.
+ * TODO(Jairus): stub from the UML.
  */
 public class GlowingBush implements Interactable {
     private final boolean hasPiece;
@@ -21,6 +21,6 @@ public class GlowingBush implements Interactable {
 
     @Override
     public void interact(Player p) {
-        // TODO(Johndel): search time = searchSeconds / weapon cutSpeed; reveal the piece once.
+        // TODO(Jairus): search time = searchSeconds / weapon cutSpeed; reveal the piece once.
     }
 }

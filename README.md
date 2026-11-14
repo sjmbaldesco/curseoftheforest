@@ -85,8 +85,8 @@ Tiled maps must have a tile layer named `solid` (any tile there blocks movement)
 
 | Member | GitHub | Responsibilities |
 |---|---|---|
-| Sir Jairus Matthew M. Baldesco | [@sjmbaldesco](https://github.com/sjmbaldesco) | Main game class and screens, Player movement and stats, TileMap and collision, GameStage and stage transitions, StageTimer. Coordinates tasks and deadlines. |
-| Johndel M. Cuentas | [@jdvoid](https://github.com/jdvoid) | Item hierarchy, Inventory, Shop, InsufficientCoinsException, Stage 1–3 creatures and mini-game logic. |
+| Sir Jairus Matthew M. Baldesco | [@sjmbaldesco](https://github.com/sjmbaldesco) | Main game class and screens, Player movement and stats, TileMap and collision, GameStage and stage transitions, StageTimer, Stage 3 (Tikbalang clue search). Coordinates tasks and deadlines. |
+| Johndel M. Cuentas | [@jdvoid](https://github.com/jdvoid) | Item hierarchy, Inventory, Shop, InsufficientCoinsException, item effects, Stage 1–2 creatures and mini-game logic. |
 | Phebe A. De Galicia | [@phiiibibii](https://github.com/phiiibibii) | Creature base, Stages 4–5 (Nuno, Riddle, Mangkukulam, PotionDuel), cutscenes and dialogue, HUD, AssetLoader, Tiled level maps and pixel art, input validation checks, UML, tests, README, presentation. |
 
 ## OOP concepts demonstrated

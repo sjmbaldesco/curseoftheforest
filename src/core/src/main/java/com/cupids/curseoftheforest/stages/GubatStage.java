@@ -6,7 +6,7 @@ import com.cupids.curseoftheforest.ForestGame;
  * Stage 3: Ang Gubat ng Tikbalang. Timed search of glowing bushes for the clue pieces.
  *
  * <p>Placeholder: uses the shared test map and completes when Dayo reaches the exit.
- * TODO(Johndel): stage mechanics.
+ * TODO(Jairus): stage mechanics.
  */
 public class GubatStage extends GameStage {
 
@@ -16,7 +16,7 @@ public class GubatStage extends GameStage {
 
     @Override
     protected void init() {
-        timer = new StageTimer(90f); // TODO(Johndel): 180 s if Dayo has the Agimat.
+        timer = new StageTimer(90f); // TODO(Jairus): 180 s if Dayo has the Agimat.
     }
 
     @Override

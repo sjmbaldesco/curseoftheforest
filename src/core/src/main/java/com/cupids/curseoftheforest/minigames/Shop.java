@@ -15,7 +15,7 @@ public class Shop {
             new Weapon("Lumang Itak", 3, "An old bolo for clearing bushes.", 1f),
             new Weapon("Lumang Punyal", 3, "An old dagger for clearing bushes.", 1f),
             new Accessory("Agimat ni Enteng", 5, "A protective charm.", 0),
-            new Consumable("Malunggay Juice", 7, "Gives you extra time for Nuno's riddles.", 0),
+            new Consumable("Malunggay Juice", 7, "Restores 25 Courage or grants extra time if kept for Nuno's riddles.", 25),
             new Accessory("Kwerdas ng Gitara", 10, "Strings for Dayo's guitar.", 0)
     );
 

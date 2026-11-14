@@ -11,6 +11,7 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.creatures.DuwendeTonyo;
 import com.cupids.curseoftheforest.creatures.Wakwak;
+import com.cupids.curseoftheforest.items.Consumable;
 import com.cupids.curseoftheforest.items.Item;
 import com.cupids.curseoftheforest.minigames.InsufficientCoinsException;
 import com.cupids.curseoftheforest.player.Player;
@@ -78,6 +79,11 @@ public class PalengkeStage extends GameStage {
             return;
         }
 
+        if (Gdx.input.isKeyJustPressed(Input.Keys.U)) {
+            drinkJuice();
+            return;
+        }
+
         List<Item> stock = tonyo.getShop().listStock();
         for (int i = 0; i < stock.size(); i++) {
             if (Gdx.input.isKeyJustPressed(SHOP_KEYS[i])) {
@@ -85,6 +91,23 @@ public class PalengkeStage extends GameStage {
                 return;
             }
         }
+    }
+
+    private void drinkJuice() {
+        for (Item item : player.getInventory().getAll()) {
+            if (item instanceof Consumable && "Malunggay Juice".equals(item.getName())) {
+                int courageBefore = player.getCourage();
+                if (courageBefore == Player.MAX_STAT) {
+                    shopMessage = "Courage is full. Save the juice for Stage 4.";
+                    return;
+                }
+                player.useItem(item);
+                shopMessage = "Drank Malunggay Juice. Recovered "
+                        + (player.getCourage() - courageBefore) + " Courage.";
+                return;
+            }
+        }
+        shopMessage = "Buy Malunggay Juice first.";
     }
 
     private void buy(Item item) {
@@ -152,7 +175,8 @@ public class PalengkeStage extends GameStage {
         batch.setProjectionMatrix(shopProjection);
         batch.begin();
         font.draw(batch, tonyo.getName() + "'s Shop", left, top);
-        font.draw(batch, "Dayo's coins: " + player.getCoins(), left, top - 32);
+        font.draw(batch, "Dayo's coins: " + player.getCoins()
+                + "   Courage: " + player.getCourage(), left, top - 32);
         if (!tonyo.isShopOpen()) {
             font.draw(batch, "Press E to talk to Duwende Tonyo.", left, top - 72);
         } else {
@@ -163,7 +187,9 @@ public class PalengkeStage extends GameStage {
                 String price = player.getInventory().has(item) ? "Bought" : item.getPrice() + " coins";
                 font.draw(batch, (i + 1) + "   " + item.getName() + "   " + price, left, top - 112 - i * 30);
             }
-            font.draw(batch, shopMessage, left, top - 280);
+            font.draw(batch, "U: Drink Malunggay Juice (+25 Courage). Save it for +2 minutes in Stage 4.",
+                    left, top - 274);
+            font.draw(batch, shopMessage, left, top - 306);
         }
         batch.end();
     }

@@ -34,6 +34,8 @@ public abstract class GameStage extends ScreenAdapter {
     protected Player player;
     protected Checkpoint checkpoint;
     protected Hud hud;
+    /** True after the player retries from the game-over screen, so stages can skip story scenes. */
+    protected boolean retried;
 
     private final OrthographicCamera camera = new OrthographicCamera();
     private Texture coinTexture;
@@ -82,6 +84,7 @@ public abstract class GameStage extends ScreenAdapter {
 
     /** Restarts the stage with Dayo's coins, stats and items as they were on entry. */
     public void retry() {
+        retried = true;
         player.restore(checkpoint);
         setUp();
     }

@@ -27,8 +27,10 @@ public class MangkukulamStage extends GameStage {
     @Override
     protected void init() {
         if (scene != null) scene.dispose();
-        scene = new CutScene(CutScene.flashbackTwo(), game.getAssetLoader().loadImage("images/backgrounds/mangkukulam.png"));
-        sceneIndex = 0;
+        // The flashback plays once; a retry goes straight back to the duel.
+        scene = retried ? null
+                : new CutScene(CutScene.flashbackTwo(), game.getAssetLoader().loadImage("images/backgrounds/mangkukulam.png"));
+        sceneIndex = retried ? 1 : 0;
         message = "Approach the Mangkukulam and press E.";
         witch = new Mangkukulam(480, 192);
         witch.setSpriteSheet(game.getAssetLoader().loadImage("images/characters/mangkukulam.png"), 5);

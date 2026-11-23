@@ -39,7 +39,7 @@ public class CutScene extends ScreenAdapter {
 
     @Override
     public void show() {
-        if (batch == null) { batch = new SpriteBatch(); font = new BitmapFont(); }
+        if (batch == null) { batch = new SpriteBatch(); font = Theme.loadFont(); }
     }
 
     @Override
@@ -53,12 +53,14 @@ public class CutScene extends ScreenAdapter {
             action.run();
             return;
         }
-        ScreenUtils.clear(0.035f, 0.055f, 0.07f, 1);
+        ScreenUtils.clear(Theme.NIGHT);
         MenuText.begin(batch);
         if (background != null) batch.draw(background, 0, 180, 960, 360);
-        font.setColor(Color.WHITE);
-        font.draw(batch, getCurrentLine(), 48, 145, 864, Align.left, true);
-        font.draw(batch, isFinished() ? "Scene complete" : "Enter / Space: continue", 48, 40);
+        Theme.panel(batch, 24, 24, 912, 140);
+        font.setColor(Theme.INK);
+        font.draw(batch, getCurrentLine(), 48, 140, 864, Align.left, true);
+        font.setColor(Theme.LEAF);
+        font.draw(batch, isFinished() ? "Scene complete" : "Enter / Space: continue", 48, 56);
         batch.end();
     }
 

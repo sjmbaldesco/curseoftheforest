@@ -1,5 +1,6 @@
 package com.cupids.curseoftheforest.screens;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -25,6 +26,25 @@ public final class MenuText {
         font.getData().setScale(scale);
         LAYOUT.setText(font, text);
         font.draw(batch, LAYOUT, (ForestGame.WORLD_WIDTH - LAYOUT.width) / 2, y);
+        font.getData().setScale(previousX, previousY);
+    }
+
+    /** Same as {@link #centered} but in the given colour, with a dark drop shadow for readability. */
+    public static void centered(SpriteBatch batch, BitmapFont font, String text, float y, float scale, Color color) {
+        Color previous = new Color(font.getColor());
+        font.setColor(Theme.INK);
+        centeredAt(batch, font, text, y - 2 * scale, scale, 2 * scale);
+        font.setColor(color);
+        centered(batch, font, text, y, scale);
+        font.setColor(previous);
+    }
+
+    private static void centeredAt(SpriteBatch batch, BitmapFont font, String text, float y, float scale, float dx) {
+        float previousX = font.getData().scaleX;
+        float previousY = font.getData().scaleY;
+        font.getData().setScale(scale);
+        LAYOUT.setText(font, text);
+        font.draw(batch, LAYOUT, (ForestGame.WORLD_WIDTH - LAYOUT.width) / 2 + dx, y);
         font.getData().setScale(previousX, previousY);
     }
 }

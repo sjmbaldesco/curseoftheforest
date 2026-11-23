@@ -31,17 +31,18 @@ public class Hud {
         Color color = new Color(font.getColor());
         batch.setProjectionMatrix(screen);
         batch.begin();
-        font.setColor(Color.WHITE);
-        font.draw(batch, stageName, 16, 524);
-        meter(batch, "Courage", player.getCourage(), 16);
-        meter(batch, "Sanity", player.getSanity(), 330);
-        font.setColor(Color.WHITE);
-        String stats = "Coins: " + player.getCoins();
+        Theme.shade(batch, 0, 478, ForestGame.WORLD_WIDTH, 62);
+        font.setColor(Theme.GOLD);
+        font.draw(batch, stageName, 16, 534);
+        meter(batch, "Courage", player.getCourage(), 16, Theme.COURAGE);
+        meter(batch, "Sanity", player.getSanity(), 300, Theme.SANITY);
+        font.setColor(Theme.PAPER);
+        font.draw(batch, "Coins: " + player.getCoins(), 600, 500);
         if (timer != null) {
             int seconds = (int) Math.ceil(timer.getRemaining());
-            stats += String.format("    Time %d:%02d", seconds / 60, seconds % 60);
+            font.setColor(seconds <= 10 ? Theme.WARNING : Theme.PAPER);
+            font.draw(batch, String.format("Time %d:%02d", seconds / 60, seconds % 60), 760, 500);
         }
-        font.draw(batch, stats, 650, 500);
         StringBuilder items = new StringBuilder("Items: ");
         int count = 0;
         for (Item item : player.getInventory().getAll()) {
@@ -50,6 +51,8 @@ public class Hud {
             items.append(item.getName());
         }
         if (count == 0) items.append("none");
+        Theme.shade(batch, 0, 0, ForestGame.WORLD_WIDTH, 56);
+        font.setColor(Theme.PAPER);
         font.draw(batch, items.toString(), 16, 40, 920, Align.left, true);
         batch.end();
         font.setColor(color);
@@ -62,9 +65,13 @@ public class Hud {
         batch.begin();
     }
 
-    private void meter(SpriteBatch batch, String label, int value, float x) {
-        int filled = Math.max(0, Math.min(20, value / 5));
-        font.setColor(value <= 25 ? Color.SALMON : Color.WHITE);
-        font.draw(batch, label + " [" + "|".repeat(filled) + ".".repeat(20 - filled) + "] " + value, x, 500);
+    /** Filled bar (0 to 100) with its label; turns salmon-red text when low. */
+    private void meter(SpriteBatch batch, String label, int value, float x, Color fill) {
+        int clamped = Math.max(0, Math.min(100, value));
+        font.setColor(value <= 25 ? Theme.WARNING : Theme.PAPER);
+        font.draw(batch, label + " " + value, x, 516);
+        Theme.rect(batch, Theme.INK, x - 2, 480, 204, 14);
+        Theme.rect(batch, Theme.NIGHT, x, 482, 200, 10);
+        Theme.rect(batch, value <= 25 ? Theme.WARNING : fill, x, 482, 2f * clamped, 10);
     }
 }

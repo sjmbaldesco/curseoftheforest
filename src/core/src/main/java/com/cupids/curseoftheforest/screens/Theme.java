@@ -62,6 +62,11 @@ public final class Theme {
         rect(batch, PAPER, x, y, w, h);
     }
 
+    /** The strip of hint text above the item bar: dark and translucent so it reads over any painting. */
+    public static void hintPanel(SpriteBatch batch) {
+        shade(batch, 8, 62, 944, 130);
+    }
+
     /** Dark translucent panel for text that sits over a painted background. */
     public static void shade(SpriteBatch batch, float x, float y, float w, float h) {
         rect(batch, SHADE, x, y, w, h);

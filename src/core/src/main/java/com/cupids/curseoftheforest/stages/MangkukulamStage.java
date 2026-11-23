@@ -12,6 +12,7 @@ import com.cupids.curseoftheforest.minigames.Shop;
 import com.cupids.curseoftheforest.minigames.PotionType;
 import com.cupids.curseoftheforest.screens.CutScene;
 import com.cupids.curseoftheforest.screens.MenuText;
+import com.cupids.curseoftheforest.screens.Theme;
 
 /** Potion duel against a witch who hides her choice, then the final story scenes. */
 public class MangkukulamStage extends GameStage {
@@ -103,7 +104,8 @@ public class MangkukulamStage extends GameStage {
         witch.render(batch);
         batch.end();
         MenuText.begin(batch);
-        game.getFont().setColor(Color.WHITE);
+        Theme.hintPanel(batch);
+        game.getFont().setColor(Theme.PAPER);
         game.getFont().draw(batch, message, 20, 175);
         PotionDuel duel = witch.getDuel();
         if (duel != null) {

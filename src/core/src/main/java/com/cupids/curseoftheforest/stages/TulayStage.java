@@ -8,6 +8,7 @@ import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.creatures.Nuno;
 import com.cupids.curseoftheforest.minigames.Shop;
 import com.cupids.curseoftheforest.screens.MenuText;
+import com.cupids.curseoftheforest.screens.Theme;
 import com.cupids.curseoftheforest.screens.CutScene;
 
 /** Three food riddles reward the three potion types needed by the next stage. */
@@ -73,7 +74,8 @@ public class TulayStage extends GameStage {
         nuno.render(batch);
         batch.end();
         MenuText.begin(batch);
-        game.getFont().setColor(Color.WHITE);
+        Theme.hintPanel(batch);
+        game.getFont().setColor(Theme.PAPER);
         game.getFont().draw(batch, message, 20, 160);
         game.getFont().draw(batch, "Riddles: " + nuno.getAnsweredCount() + "/3", 20, 135);
         if (nuno.hasStarted() && !nuno.isComplete()) {

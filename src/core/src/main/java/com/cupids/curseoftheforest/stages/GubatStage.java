@@ -15,6 +15,7 @@ import com.cupids.curseoftheforest.creatures.Tikbalang;
 import com.cupids.curseoftheforest.minigames.Shop;
 import com.cupids.curseoftheforest.player.Player;
 import com.cupids.curseoftheforest.screens.MenuText;
+import com.cupids.curseoftheforest.screens.Theme;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -183,8 +184,9 @@ public class GubatStage extends GameStage {
         batch.end();
 
         MenuText.begin(batch);
+        Theme.hintPanel(batch);
         BitmapFont font = game.getFont();
-        font.setColor(Color.WHITE);
+        font.setColor(Theme.PAPER);
         font.draw(batch, message, 20, 175, 920, Align.left, true);
         font.draw(batch, "Clue: " + clueSoFar() + "   (" + pieces.size() + "/" + CLUE.length + ")", 20, 125);
         GlowingBush searching = searchingBush();

@@ -6,8 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Dayo's items. Minimal version so Player and Checkpoint work.
- * TODO(Johndel): owner of this class; extend as the shop and items need.
+ * Dayo's items: what he carries, bought from the shop or received from creatures.
  */
 public class Inventory {
     private final ArrayList<Item> items = new ArrayList<>();

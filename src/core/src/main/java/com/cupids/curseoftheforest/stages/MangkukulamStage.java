@@ -8,6 +8,7 @@ import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.creatures.Mangkukulam;
 import com.cupids.curseoftheforest.items.Potion;
 import com.cupids.curseoftheforest.minigames.PotionDuel;
+import com.cupids.curseoftheforest.minigames.Shop;
 import com.cupids.curseoftheforest.minigames.PotionType;
 import com.cupids.curseoftheforest.screens.CutScene;
 import com.cupids.curseoftheforest.screens.MenuText;
@@ -74,7 +75,7 @@ public class MangkukulamStage extends GameStage {
             failed = true;
         }
         if (duel.isWon() && reachedExit() && !isFailed() && sceneIndex == 1) {
-            boolean hasGuitarStrings = player.getInventory().has("Kwerdas ng Gitara");
+            boolean hasGuitarStrings = player.getInventory().has(Shop.KWERDAS);
             scene = new CutScene(CutScene.serenade(hasGuitarStrings),
                     game.getAssetLoader().loadImage("images/backgrounds/ending.png"));
             sceneIndex = 2;

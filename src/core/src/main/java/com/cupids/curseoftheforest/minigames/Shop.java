@@ -11,12 +11,24 @@ import java.util.List;
  * Duwende Tonyo's store.
  */
 public class Shop {
+    // Item names in one place: stages check the inventory by exact name, so a typo would
+    // silently switch an item's effect off.
+    public static final String ITAK = "Lumang Itak";
+    public static final String PUNYAL = "Lumang Punyal";
+    public static final String AGIMAT = "Agimat ni Enteng";
+    public static final String MALUNGGAY_JUICE = "Malunggay Juice";
+    public static final String KWERDAS = "Kwerdas ng Gitara";
+
+    /** The bolo clears bushes twice as fast as bare hands; the dagger 1.5 times as fast. */
+    public static final float ITAK_CUT_SPEED = 2f;
+    public static final float PUNYAL_CUT_SPEED = 1.5f;
+
     private final List<Item> stock = List.of(
-            new Weapon("Lumang Itak", 3, "An old bolo for clearing bushes.", 1f),
-            new Weapon("Lumang Punyal", 3, "An old dagger for clearing bushes.", 1f),
-            new Accessory("Agimat ni Enteng", 5, "A protective charm.", 0),
-            new Consumable("Malunggay Juice", 7, "Restores 25 Courage or grants extra time if kept for Nuno's riddles.", 25),
-            new Accessory("Kwerdas ng Gitara", 10, "Strings for Dayo's guitar.", 0)
+            new Weapon(ITAK, 3, "An old bolo. Searches bushes twice as fast.", ITAK_CUT_SPEED),
+            new Weapon(PUNYAL, 3, "An old dagger. Searches bushes 1.5 times as fast.", PUNYAL_CUT_SPEED),
+            new Accessory(AGIMAT, 5, "A protective charm. Doubles the time in the Tikbalang's forest.", 0),
+            new Consumable(MALUNGGAY_JUICE, 7, "Restores 25 Courage or grants extra time if kept for Nuno's riddles.", 25),
+            new Accessory(KWERDAS, 10, "Strings for Dayo's guitar.", 0)
     );
 
     public void purchase(Player player, Item item) throws InsufficientCoinsException {

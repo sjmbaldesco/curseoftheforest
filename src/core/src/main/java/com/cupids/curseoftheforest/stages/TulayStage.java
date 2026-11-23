@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.creatures.Nuno;
+import com.cupids.curseoftheforest.minigames.Shop;
 import com.cupids.curseoftheforest.screens.MenuText;
 import com.cupids.curseoftheforest.screens.CutScene;
 
@@ -27,7 +28,7 @@ public class TulayStage extends GameStage {
         message = "Approach Nuno and press E. Tabi-tabi po!";
         nuno = new Nuno(320, 256);
         nuno.setSpriteSheet(game.getAssetLoader().loadImage("images/characters/nuno.png"), 5);
-        boolean hasJuice = player.getInventory().has("Malunggay Juice");
+        boolean hasJuice = player.getInventory().has(Shop.MALUNGGAY_JUICE);
         timer = new StageTimer(hasJuice ? 300 : 180);
     }
 

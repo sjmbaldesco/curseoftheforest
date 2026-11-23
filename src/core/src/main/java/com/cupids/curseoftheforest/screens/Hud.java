@@ -1,14 +1,19 @@
 package com.cupids.curseoftheforest.screens;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.Align;
+import com.cupids.curseoftheforest.AssetLoader;
 import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.player.Player;
 import com.cupids.curseoftheforest.items.Item;
 import com.cupids.curseoftheforest.stages.StageTimer;
+import java.util.HashMap;
+import java.util.Map;
 
 /** Screen-space meters and inventory; borrows the game's font and batch. */
 public class Hud {
@@ -16,6 +21,18 @@ public class Hud {
     private final StageTimer timer;
     private final BitmapFont font;
     private final String stageName;
+    /** Item name to icon file; items without an icon (potions) are listed by name instead. */
+    private static final Map<String, String> ICON_FILES = Map.of(
+            "Lumang Itak", "itak",
+            "Lumang Punyal", "punyal",
+            "Agimat ni Enteng", "agimat-ni-enteng",
+            "Malunggay Juice", "malunggay-juice",
+            "Kwerdas ng Gitara", "kwerdas",
+            "Rosary", "rosary",
+            "Lumang Gitara", "lumang-gitara");
+
+    private AssetLoader icons;
+    private final Map<String, Texture> iconCache = new HashMap<>();
     private final Matrix4 worldProjection = new Matrix4();
     private final Matrix4 screen = new Matrix4().setToOrtho2D(0, 0, ForestGame.WORLD_WIDTH, ForestGame.WORLD_HEIGHT);
 
@@ -24,6 +41,27 @@ public class Hud {
         this.timer = timer;
         this.font = font;
         this.stageName = stageName;
+    }
+
+    /** Lets the HUD draw item icons; without it the item list stays text-only. */
+    public void setIcons(AssetLoader loader) {
+        this.icons = loader;
+    }
+
+    private Texture iconFor(Item item) {
+        String file = ICON_FILES.get(item.getName());
+        if (icons == null || file == null) {
+            return null;
+        }
+        return iconCache.computeIfAbsent(file, f -> {
+            String path = "images/icons/" + f + ".png";
+            if (!Gdx.files.internal(path).exists()) {
+                return null;
+            }
+            Texture texture = icons.loadImage(path);
+            texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+            return texture;
+        });
     }
 
     public void render(SpriteBatch batch) {
@@ -43,17 +81,29 @@ public class Hud {
             font.setColor(seconds <= 10 ? Theme.WARNING : Theme.PAPER);
             font.draw(batch, String.format("Time %d:%02d", seconds / 60, seconds % 60), 760, 500);
         }
-        StringBuilder items = new StringBuilder("Items: ");
-        int count = 0;
-        for (Item item : player.getInventory().getAll()) {
-            if (count == 6) { items.append(" +").append(player.getInventory().getAll().size() - count).append(" more"); break; }
-            if (count++ > 0) items.append(", ");
-            items.append(item.getName());
-        }
-        if (count == 0) items.append("none");
         Theme.shade(batch, 0, 0, ForestGame.WORLD_WIDTH, 56);
         font.setColor(Theme.PAPER);
-        font.draw(batch, items.toString(), 16, 40, 920, Align.left, true);
+        float x = 16;
+        font.draw(batch, "Items:", x, 38);
+        x += 76;
+        StringBuilder names = new StringBuilder();
+        int count = 0;
+        for (Item item : player.getInventory().getAll()) {
+            if (count++ == 8) {
+                names.append(" +").append(player.getInventory().getAll().size() - 8).append(" more");
+                break;
+            }
+            Texture icon = iconFor(item);
+            if (icon != null) {
+                batch.draw(icon, x, 4, 44, 44);
+                x += 52;
+            } else {
+                if (names.length() > 0) names.append(", ");
+                names.append(item.getName());
+            }
+        }
+        if (count == 0) names.append("none");
+        font.draw(batch, names.toString(), x + 8, 38, ForestGame.WORLD_WIDTH - x - 24, Align.left, false);
         batch.end();
         font.setColor(color);
         // Earlier stages draw their overlays next and expect screen coordinates.

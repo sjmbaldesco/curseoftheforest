@@ -3,15 +3,19 @@ package com.cupids.curseoftheforest.stages;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.player.Player;
 import com.cupids.curseoftheforest.screens.Hud;
+import com.cupids.curseoftheforest.screens.Theme;
 
 /**
  * Base class for the five stages. It runs the shared frame loop (input, player physics, coins,
@@ -23,6 +27,7 @@ public abstract class GameStage extends ScreenAdapter {
     private static final float MAX_DELTA = 1 / 30f;
     /** How far below the map the player can fall before the stage counts as failed. */
     private static final float FALL_LIMIT = -64f;
+    private static final String COIN_SHEET = "images/coin-sheet.png";
 
     protected final ForestGame game;
     protected final String name;
@@ -39,6 +44,10 @@ public abstract class GameStage extends ScreenAdapter {
 
     private final OrthographicCamera camera = new OrthographicCamera();
     private Texture coinTexture;
+    /** Spinning coin frames; null if the sprite sheet is missing, then the still coin is used. */
+    private Animation<TextureRegion> coinSpin;
+    private float coinTime;
+    private ParallaxBackground parallax;
     /** Fractions of a point drained so far; stats are whole numbers, so drain is banked. */
     private float courageDrainBank;
     private float sanityDrainBank;
@@ -79,6 +88,13 @@ public abstract class GameStage extends ScreenAdapter {
         player = game.getPlayer();
         checkpoint = player.saveCheckpoint();
         coinTexture = game.getAssetLoader().loadImage("images/coin.png");
+        if (Gdx.files.internal(COIN_SHEET).exists()) {
+            Texture sheet = game.getAssetLoader().loadImage(COIN_SHEET);
+            sheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+            coinSpin = new Animation<>(0.08f, TextureRegion.split(sheet, 32, 32)[0]);
+            coinSpin.setPlayMode(Animation.PlayMode.LOOP);
+        }
+        parallax = ParallaxBackground.forStage(game.getAssetLoader(), name);
         setUp();
     }
 
@@ -99,6 +115,7 @@ public abstract class GameStage extends ScreenAdapter {
         sanityDrainBank = 0f;
         init();
         hud = new Hud(player, timer, game.getFont(), name);
+        hud.setIcons(game.getAssetLoader());
     }
 
     // ---------------------------------------------------------------- frame loop
@@ -168,15 +185,27 @@ public abstract class GameStage extends ScreenAdapter {
     }
 
     private void draw() {
-        ScreenUtils.clear(0.42f, 0.62f, 0.75f, 1f);
+        ScreenUtils.clear(parallax != null ? Theme.NIGHT : Color.valueOf("6B9EBF"));
         followPlayer();
-        tileMap.render(camera);
-
         SpriteBatch batch = game.getBatch();
+        if (parallax != null) {
+            parallax.renderBack(batch, camera);
+        }
+        tileMap.render(camera);
+        if (parallax != null) {
+            parallax.renderFront(batch, camera);
+        }
+
+        coinTime += Gdx.graphics.getDeltaTime();
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         for (Rectangle coin : tileMap.getCoinMarkers()) {
-            batch.draw(coinTexture, coin.x, coin.y, coin.width, coin.height);
+            if (coinSpin != null) {
+                // The coin art is 32 px but the map marks coins as 16 px; centre the sprite on the marker.
+                batch.draw(coinSpin.getKeyFrame(coinTime), coin.x + coin.width / 2 - 16, coin.y + coin.height / 2 - 16, 32, 32);
+            } else {
+                batch.draw(coinTexture, coin.x, coin.y, coin.width, coin.height);
+            }
         }
         player.render(batch);
         batch.end();

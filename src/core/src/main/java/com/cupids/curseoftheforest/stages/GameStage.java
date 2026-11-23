@@ -37,12 +37,14 @@ public abstract class GameStage extends ScreenAdapter {
 
     private final OrthographicCamera camera = new OrthographicCamera();
     private Texture coinTexture;
+    /** Fractions of a point drained so far; stats are whole numbers, so drain is banked. */
+    private float courageDrainBank;
+    private float sanityDrainBank;
 
     protected GameStage(ForestGame game, String name, String mapPath) {
         this.game = game;
         this.name = name;
         this.mapPath = mapPath;
-        camera.setToOrtho(false, ForestGame.WORLD_WIDTH, ForestGame.WORLD_HEIGHT);
     }
 
     // ---------------------------------------------------------------- what each stage defines
@@ -56,10 +58,22 @@ public abstract class GameStage extends ScreenAdapter {
     /** Stage-specific keys (answering riddles, picking potions...). Movement is handled here. */
     protected abstract void handleInput();
 
+    /** Courage lost per second while in this stage. Safe stages keep the default of 0. */
+    protected float courageDrainPerSecond() {
+        return 0f;
+    }
+
+    /** Sanity lost per second while in this stage. Safe stages keep the default of 0. */
+    protected float sanityDrainPerSecond() {
+        return 0f;
+    }
+
     // ---------------------------------------------------------------- lifecycle
 
     /** Enters the stage for the first time: remembers Dayo's state for retries, then sets up. */
     public void begin() {
+        // Set up here rather than in the constructor so a stage can be built without graphics (tests).
+        camera.setToOrtho(false, ForestGame.WORLD_WIDTH, ForestGame.WORLD_HEIGHT);
         player = game.getPlayer();
         checkpoint = player.saveCheckpoint();
         coinTexture = game.getAssetLoader().loadImage("images/coin.png");
@@ -78,6 +92,8 @@ public abstract class GameStage extends ScreenAdapter {
         completed = false;
         failed = false;
         timer = null;
+        courageDrainBank = 0f;
+        sanityDrainBank = 0f;
         init();
         hud = new Hud(player, timer, game.getFont(), name);
     }
@@ -102,6 +118,7 @@ public abstract class GameStage extends ScreenAdapter {
         if (timer != null) {
             timer.tick(delta);
         }
+        applyDrain(delta);
         update(delta);
 
         if (isComplete()) {
@@ -113,6 +130,22 @@ public abstract class GameStage extends ScreenAdapter {
             return;
         }
         draw();
+    }
+
+    /** Takes this stage's Courage and Sanity drain for one frame, whole points at a time. */
+    void applyDrain(float delta) {
+        courageDrainBank += Math.max(0f, courageDrainPerSecond()) * delta;
+        sanityDrainBank += Math.max(0f, sanityDrainPerSecond()) * delta;
+        int courageLoss = (int) courageDrainBank;
+        int sanityLoss = (int) sanityDrainBank;
+        if (courageLoss > 0) {
+            player.changeCourage(-courageLoss);
+            courageDrainBank -= courageLoss;
+        }
+        if (sanityLoss > 0) {
+            player.changeSanity(-sanityLoss);
+            sanityDrainBank -= sanityLoss;
+        }
     }
 
     private void readMovementKeys() {

@@ -55,12 +55,12 @@ public class CutScene extends ScreenAdapter {
         }
         ScreenUtils.clear(Theme.NIGHT);
         MenuText.begin(batch);
-        if (background != null) batch.draw(background, 0, 180, 960, 360);
-        Theme.panel(batch, 24, 24, 912, 140);
+        if (background != null) batch.draw(background, 0, 0, 960, 540);
+        Theme.panel(batch, 24, 380, 912, 136);
         font.setColor(Theme.INK);
-        font.draw(batch, getCurrentLine(), 48, 140, 864, Align.left, true);
+        font.draw(batch, getCurrentLine(), 48, 496, 864, Align.left, true);
         font.setColor(Theme.LEAF);
-        font.draw(batch, isFinished() ? "Scene complete" : "Enter / Space: continue", 48, 56);
+        font.draw(batch, isFinished() ? "Scene complete" : "Enter / Space: continue", 48, 412);
         batch.end();
     }
 

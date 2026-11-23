@@ -29,7 +29,7 @@ public class MangkukulamStage extends GameStage {
         if (scene != null) scene.dispose();
         // The flashback plays once; a retry goes straight back to the duel.
         scene = retried ? null
-                : new CutScene(CutScene.flashbackTwo(), game.getAssetLoader().loadImage("images/backgrounds/mangkukulam.png"));
+                : new CutScene(CutScene.flashbackTwo(), game.getAssetLoader().loadImage("images/backgrounds/flashback-2.png"));
         sceneIndex = retried ? 1 : 0;
         message = "Approach the Mangkukulam and press E.";
         witch = new Mangkukulam(480, 192);
@@ -72,7 +72,7 @@ public class MangkukulamStage extends GameStage {
         if (duel.isWon() && reachedExit() && !isFailed() && sceneIndex == 1) {
             boolean hasGuitarStrings = player.getInventory().has(Shop.KWERDAS);
             scene = new CutScene(CutScene.serenade(hasGuitarStrings),
-                    game.getAssetLoader().loadImage("images/backgrounds/ending.png"));
+                    game.getAssetLoader().loadImage("images/backgrounds/serenade.png"));
             sceneIndex = 2;
         }
     }

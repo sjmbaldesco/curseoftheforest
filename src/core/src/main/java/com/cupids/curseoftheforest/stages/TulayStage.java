@@ -26,7 +26,7 @@ public class TulayStage extends GameStage {
         if (scene != null) scene.dispose();
         // The flashback plays once; a retry goes straight back to the riddles.
         scene = retried ? null
-                : new CutScene(CutScene.flashbackOne(), game.getAssetLoader().loadImage("images/backgrounds/tulay.png"));
+                : new CutScene(CutScene.flashbackOne(), game.getAssetLoader().loadImage("images/backgrounds/flashback-1.png"));
         message = "Approach Nuno and press E. Tabi-tabi po!";
         nuno = new Nuno(320, 256);
         nuno.setSpriteSheet(game.getAssetLoader().loadImage("images/characters/nuno.png"), 5);

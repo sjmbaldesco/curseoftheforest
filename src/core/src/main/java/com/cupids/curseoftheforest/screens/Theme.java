@@ -67,6 +67,20 @@ public final class Theme {
         rect(batch, SHADE, x, y, w, h);
     }
 
+    /** Loads a full-screen painting for a menu; returns null if the file is missing so the screen still draws. */
+    public static Texture loadBackdrop(com.cupids.curseoftheforest.AssetLoader assets, String path) {
+        return Gdx.files.internal(path).exists() ? assets.loadImage(path) : null;
+    }
+
+    /** Draws the painting over the whole screen, then a light shade so text stays readable. */
+    public static void drawBackdrop(SpriteBatch batch, Texture backdrop) {
+        if (backdrop == null) {
+            return;
+        }
+        batch.draw(backdrop, 0, 0, 960, 540);
+        rect(batch, new Color(0f, 0f, 0f, 0.25f), 0, 0, 960, 540);
+    }
+
     public static void dispose() {
         if (pixel != null) {
             pixel.dispose();

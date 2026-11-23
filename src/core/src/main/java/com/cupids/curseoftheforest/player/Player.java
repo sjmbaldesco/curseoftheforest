@@ -168,14 +168,15 @@ public class Player {
         item.use(this);
     }
 
-    /** Returns the first weapon in the inventory, or null if Dayo has none. */
+    /** Returns Dayo's fastest-cutting weapon, or null if he has none. */
     public Weapon getWeapon() {
+        Weapon best = null;
         for (Item item : inventory.getAll()) {
-            if (item instanceof Weapon weapon) {
-                return weapon;
+            if (item instanceof Weapon weapon && (best == null || weapon.getCutSpeed() > best.getCutSpeed())) {
+                best = weapon;
             }
         }
-        return null;
+        return best;
     }
 
     // ---------------------------------------------------------------- checkpoints

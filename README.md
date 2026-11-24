@@ -98,7 +98,8 @@ curseoftheforest/
 │   │   ├── creatures/       Interactable, Creature + 6 creatures, GlowingBush
 │   │   └── minigames/       Shop, InsufficientCoinsException, Riddle, PotionDuel, PotionType
 │   ├── lwjgl3/              desktop launcher (Main)
-│   └── assets/              maps/ (Tiled), images/
+│   └── assets/              maps/ (Tiled), images/ (animated/ and parallax-v2/ hold the Blender-made sprites)
+├── design/                  UI references and the Blender export notes (design/blender/MANIFEST.md)
 ├── docs/                    UML class diagram
 ├── screenshots/
 └── README.md
@@ -133,7 +134,7 @@ A stage may add its own named markers and object layers. Stage 2 (`palengke.tmx`
 
 ## Testing
 
-`./gradlew test` (from `src/`) runs 58 JUnit 5 tests covering:
+`./gradlew test` (from `src/`) runs 63 JUnit 5 tests covering:
 
 - player movement, collision and stats;
 - the stage timer (including the paused Stage 3 clock);
@@ -143,6 +144,7 @@ A stage may add its own named markers and object layers. Stage 2 (`palengke.tmx`
 - the dialogue box (typing, paging, questions that do not pause) and fading notices;
 - full-screen scaling (16:9, 16:10 and ultrawide screens keep the game's shape);
 - ambient effects (fireflies, falling leaves and cave dust stay on screen and blink within range, each stage gets its own mix);
+- scenery art: the Blender parallax-v2 layers load first with the older art as fallback, and swaying grass and ferns grow only on top of ground tiles, the same way every time;
 - Wakwak Cave torches (5 s burn, 10 s relight, light radius), the swarm's slowdown and retreat, the Rosary, and the cave map contract;
 - the Agimat timer and Sanity shield, riddles and the Nuno's reset, Stage 4's fear vision, cutscenes and the potion duel (including a duel Dayo can lose).
 

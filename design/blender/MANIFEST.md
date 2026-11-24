@@ -1,3 +1,5 @@
+> **Where these files live in the repo (Nov 24, 2026).** Runtime art moved into `src/assets/images/`: `animated/` (with `animated/fog/`), `parallax-v2/`, and `props/bush_searching.png` as `glowing-bush-searching.png`. The v1 parallax, the icons and the other props were byte-identical to files already in `src/assets/images/`, so the copies were dropped. The tiles (not used by a map yet) and the contact sheets stay here in `design/blender/`.
+
 # Blender exports: Curse of the Forest
 
 Made 2026-11-23 in `../Assets.blend` (scene **Sprites**; one collection per asset; build code in the text block `cotf_lib.py`).

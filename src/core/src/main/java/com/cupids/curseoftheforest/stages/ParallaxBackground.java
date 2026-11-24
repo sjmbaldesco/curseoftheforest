@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.cupids.curseoftheforest.AssetLoader;
 import com.cupids.curseoftheforest.ForestGame;
@@ -33,6 +34,8 @@ public class ParallaxBackground {
     private final Texture mid;
     private final Texture near;
     private final Texture foreground;
+    /** Seconds since the background was first drawn, for the near and foreground sway. */
+    private float time;
 
     /** @param folder asset folder holding far.png, mid.png, near.png and optionally front.png, e.g. "images/parallax/stage3-gubat" */
     public ParallaxBackground(AssetLoader assets, String folder) {
@@ -67,18 +70,25 @@ public class ParallaxBackground {
 
     /** Draws the far and mid layers; call before the tile map. The batch must not be started. */
     public void renderBack(SpriteBatch batch, OrthographicCamera camera) {
-        draw(batch, camera, far, FAR_SPEED);
-        draw(batch, camera, mid, MID_SPEED);
+        time = (time + Math.min(Gdx.graphics.getDeltaTime(), 0.1f)) % 10_000f;
+        draw(batch, camera, far, FAR_SPEED, 0f);
+        draw(batch, camera, mid, MID_SPEED, 0f);
     }
 
     /** Draws the near layer; call after the tile map and before the player. */
     public void renderFront(SpriteBatch batch, OrthographicCamera camera) {
-        draw(batch, camera, near, NEAR_SPEED);
+        // Near foliage breathes a little in the wind.
+        draw(batch, camera, near, NEAR_SPEED, sway(time, 1.5f, 0.6f));
     }
 
     /** Draws the foreground layer over the characters; call after the player, before the HUD. */
     public void renderForeground(SpriteBatch batch, OrthographicCamera camera) {
-        draw(batch, camera, foreground, FOREGROUND_SPEED);
+        draw(batch, camera, foreground, FOREGROUND_SPEED, sway(time, 4f, 0.45f));
+    }
+
+    /** A slow, uneven side-to-side drift of up to {@code pixels} window pixels, like leaves in a breeze. */
+    static float sway(float time, float pixels, float speed) {
+        return pixels * (0.7f * MathUtils.sin(time * speed * MathUtils.PI2) + 0.3f * MathUtils.sin(time * speed * 2.3f * MathUtils.PI2 + 1f));
     }
 
     /**
@@ -90,14 +100,14 @@ public class ParallaxBackground {
         return cameraEdge * speed * pixelsPerWorldUnit;
     }
 
-    private void draw(SpriteBatch batch, OrthographicCamera camera, Texture layer, float speed) {
+    private void draw(SpriteBatch batch, OrthographicCamera camera, Texture layer, float speed, float swayPixels) {
         if (layer == null) {
             return;
         }
         float pixelsPerWorldUnit = ForestGame.WORLD_WIDTH / camera.viewportWidth;
         float left = camera.position.x - camera.viewportWidth / 2;
         float bottom = camera.position.y - camera.viewportHeight / 2;
-        float u = offset(left, speed, pixelsPerWorldUnit) / layer.getWidth();
+        float u = (offset(left, speed, pixelsPerWorldUnit) + Math.round(swayPixels)) / layer.getWidth();
         float uWidth = (float) ForestGame.WORLD_WIDTH / layer.getWidth();
         // When the camera rises, the layer sinks a little (less than the ground does).
         float y = -offset(bottom, speed * VERTICAL_SHARE, pixelsPerWorldUnit);

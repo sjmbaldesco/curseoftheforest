@@ -6,9 +6,12 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import java.util.IdentityHashMap;
+import java.util.Map;
 
 /**
- * Shared look for menus, HUD and cutscenes: one palette, one pixel font, and flat-colour panels.
+ * Shared look for menus, HUD and cutscenes: one palette, two fonts (VCR OSD Mono for reading,
+ * Pixelify Sans for titles), and flat-colour panels.
  * The palette comes from Lola Pacita's speech bubble (cream paper, dark green ink).
  */
 public final class Theme {
@@ -22,23 +25,53 @@ public final class Theme {
     public static final Color WARNING = Color.valueOf("FF8A6B");
     public static final Color SHADE = new Color(0f, 0f, 0f, 0.55f);
 
-    private static final String FONT_PATH = "fonts/pixelify.fnt";
+    /** Body text. Its atlas is rendered at 2x (tools/make_bitmap_font.py) so it stays sharp full screen. */
+    private static final String FONT_PATH = "fonts/vcr.fnt";
+    private static final float BODY_FONT_SCALE = 0.5f;
+    /** Titles: the chunky pixel font, drawn large. */
+    private static final String TITLE_FONT_PATH = "fonts/pixelify.fnt";
+    /** Each loaded font's normal scale, so {@link #setScale} can scale relative to it. */
+    private static final Map<BitmapFont, Float> BASE_SCALES = new IdentityHashMap<>();
     private static Texture pixel;
 
     private Theme() {
     }
 
-    /** Pixel font; falls back to LibGDX's default font if the file is missing so the game never crashes. */
+    /** The body font (VCR OSD Mono), about 16 px tall in the 960 by 540 window. */
     public static BitmapFont loadFont() {
+        return load(FONT_PATH, BODY_FONT_SCALE, Texture.TextureFilter.Linear, false);
+    }
+
+    /** The title font (Pixelify Sans), for big headings such as the game's name and "Game Over". */
+    public static BitmapFont loadTitleFont() {
+        return load(TITLE_FONT_PATH, 1f, Texture.TextureFilter.Nearest, true);
+    }
+
+    /** Falls back to LibGDX's default font if the file is missing, so the game never crashes. */
+    private static BitmapFont load(String path, float scale, Texture.TextureFilter filter, boolean integerPositions) {
+        BitmapFont font;
         try {
-            BitmapFont font = new BitmapFont(Gdx.files.internal(FONT_PATH));
-            font.getRegion().getTexture().setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-            font.setUseIntegerPositions(true);
-            return font;
+            font = new BitmapFont(Gdx.files.internal(path));
+            font.getRegion().getTexture().setFilter(filter, filter);
+            font.getData().setScale(scale);
         } catch (RuntimeException e) {
-            Gdx.app.error("Theme", "Pixel font missing, using default: " + e.getMessage());
-            return new BitmapFont();
+            Gdx.app.error("Theme", "Font missing, using default: " + e.getMessage());
+            font = new BitmapFont();
+            scale = 1f;
         }
+        font.setUseIntegerPositions(integerPositions);
+        BASE_SCALES.put(font, scale);
+        return font;
+    }
+
+    /** Sets a font's size relative to its normal size: 1 is normal, 2 is twice as big. */
+    public static void setScale(BitmapFont font, float scale) {
+        font.getData().setScale(scale * BASE_SCALES.getOrDefault(font, 1f));
+    }
+
+    public static void setScale(BitmapFont font, float scaleX, float scaleY) {
+        float base = BASE_SCALES.getOrDefault(font, 1f);
+        font.getData().setScale(scaleX * base, scaleY * base);
     }
 
     /** Draws a solid rectangle; the batch must already be started. */

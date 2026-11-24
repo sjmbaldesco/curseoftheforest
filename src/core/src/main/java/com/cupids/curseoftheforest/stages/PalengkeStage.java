@@ -283,7 +283,8 @@ public class PalengkeStage extends GameStage {
         batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
         for (Torch torch : torches) {
             if (torch.isLit()) {
-                float r = Torch.LIGHT_RADIUS * (0.95f + 0.05f * MathUtils.sin(flicker * 13f));
+                // Two out-of-step waves make the flame flicker unevenly, like a real fire.
+                float r = Torch.LIGHT_RADIUS * (0.93f + 0.04f * MathUtils.sin(flicker * 13f) + 0.03f * MathUtils.sin(flicker * 31f + torch.getCentreX()));
                 drawGlow(batch, TORCH_GLOW, torch.getCentreX(), torch.getCentreY(), r);
             }
         }

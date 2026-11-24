@@ -41,7 +41,7 @@ public class GameOverScreen extends ScreenAdapter {
         MenuText.begin(batch);
         Theme.drawBackdrop(batch, backdrop);
         Theme.rect(batch, Theme.COURAGE, 0, 0, ForestGame.WORLD_WIDTH, 8);
-        MenuText.centered(batch, font, "Game Over", 400, 4f, Theme.WARNING);
+        MenuText.centered(batch, game.getTitleFont(), "Game Over", 400, 4f, Theme.WARNING);
         MenuText.centered(batch, font, failedStage.getName(), 330, 2f, Theme.PAPER);
         Theme.panel(batch, 330, 130, 300, 120);
         font.setColor(Theme.INK);

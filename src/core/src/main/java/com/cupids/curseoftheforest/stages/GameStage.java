@@ -67,6 +67,8 @@ public abstract class GameStage extends ScreenAdapter {
     private Animation<TextureRegion> coinSpin;
     private float coinTime;
     private ParallaxBackground parallax;
+    /** Fireflies, leaves, mist and dust for this stage; null when it has none. */
+    private Ambience ambience;
     /** Fractions of a point drained so far; stats are whole numbers, so drain is banked. */
     private float courageDrainBank;
     private float sanityDrainBank;
@@ -172,6 +174,10 @@ public abstract class GameStage extends ScreenAdapter {
             coinSpin.setPlayMode(Animation.PlayMode.LOOP);
         }
         parallax = ParallaxBackground.forStage(game.getAssetLoader(), name);
+        Ambience.Settings ambient = Ambience.settingsFor(name);
+        if (ambience == null && ambient != null) {
+            ambience = new Ambience(ambient, name.hashCode());
+        }
         setUp();
     }
 
@@ -282,8 +288,15 @@ public abstract class GameStage extends ScreenAdapter {
         ScreenUtils.clear(parallax != null ? Theme.NIGHT : Color.valueOf("6B9EBF"));
         followPlayer();
         SpriteBatch batch = game.getBatch();
+        float frameTime = Math.min(Gdx.graphics.getDeltaTime(), MAX_DELTA);
+        // How far the camera's left edge is from the map's start, in window pixels.
+        float cameraLeft = (camera.position.x - camera.viewportWidth / 2) / CAMERA_ZOOM;
         if (parallax != null) {
             parallax.renderBack(batch, camera);
+        }
+        if (ambience != null) {
+            ambience.update(frameTime); // keeps moving even while a conversation pauses the stage
+            ambience.renderBack(batch, cameraLeft);
         }
         tileMap.render(camera);
         if (parallax != null) {
@@ -296,7 +309,9 @@ public abstract class GameStage extends ScreenAdapter {
         for (Rectangle coin : coinsActive() ? tileMap.getCoinMarkers() : List.<Rectangle>of()) {
             if (coinSpin != null) {
                 // The coin art is 32 px but the map marks coins as 16 px; centre the sprite on the marker.
-                batch.draw(coinSpin.getKeyFrame(coinTime), coin.x + coin.width / 2 - 16, coin.y + coin.height / 2 - 16, 32, 32);
+                // Each coin bobs gently, out of step with its neighbours.
+                float bob = Math.round(MathUtils.sin(coinTime * 3f + coin.x * 0.05f) * 2f);
+                batch.draw(coinSpin.getKeyFrame(coinTime), coin.x + coin.width / 2 - 16, coin.y + coin.height / 2 - 16 + bob, 32, 32);
             } else {
                 batch.draw(coinTexture, coin.x, coin.y, coin.width, coin.height);
             }
@@ -304,6 +319,9 @@ public abstract class GameStage extends ScreenAdapter {
         drawWorld(batch);
         player.render(batch);
         batch.end();
+        if (ambience != null) {
+            ambience.renderFront(batch, cameraLeft);
+        }
         if (parallax != null) {
             parallax.renderForeground(batch, camera);
             // The foreground draws in window space; put the world camera back for the HUD to save.
@@ -377,5 +395,9 @@ public abstract class GameStage extends ScreenAdapter {
     @Override
     public void dispose() {
         tileMap.dispose();
+        if (ambience != null) {
+            ambience.dispose();
+            ambience = null;
+        }
     }
 }

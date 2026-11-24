@@ -23,7 +23,7 @@ public final class MenuText {
     public static void centered(SpriteBatch batch, BitmapFont font, String text, float y, float scale) {
         float previousX = font.getData().scaleX;
         float previousY = font.getData().scaleY;
-        font.getData().setScale(scale);
+        Theme.setScale(font, scale);
         LAYOUT.setText(font, text);
         font.draw(batch, LAYOUT, (ForestGame.WORLD_WIDTH - LAYOUT.width) / 2, y);
         font.getData().setScale(previousX, previousY);
@@ -42,7 +42,7 @@ public final class MenuText {
     private static void centeredAt(SpriteBatch batch, BitmapFont font, String text, float y, float scale, float dx) {
         float previousX = font.getData().scaleX;
         float previousY = font.getData().scaleY;
-        font.getData().setScale(scale);
+        Theme.setScale(font, scale);
         LAYOUT.setText(font, text);
         font.draw(batch, LAYOUT, (ForestGame.WORLD_WIDTH - LAYOUT.width) / 2 + dx, y);
         font.getData().setScale(previousX, previousY);

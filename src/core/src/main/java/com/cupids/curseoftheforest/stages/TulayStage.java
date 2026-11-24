@@ -8,6 +8,7 @@ import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.creatures.Nuno;
 import com.cupids.curseoftheforest.minigames.Shop;
 import com.cupids.curseoftheforest.screens.MenuText;
+import com.cupids.curseoftheforest.screens.Theme;
 import com.cupids.curseoftheforest.screens.CutScene;
 
 /** Three food riddles reward the three potion types needed by the next stage. */
@@ -26,7 +27,7 @@ public class TulayStage extends GameStage {
         if (scene != null) scene.dispose();
         // The flashback plays once; a retry goes straight back to the riddles.
         scene = retried ? null
-                : new CutScene(CutScene.flashbackOne(), game.getAssetLoader().loadImage("images/backgrounds/tulay.png"));
+                : new CutScene(CutScene.flashbackOne(), game.getAssetLoader().loadImage("images/backgrounds/flashback-1.png"));
         message = "Approach Nuno and press E. Tabi-tabi po!";
         nuno = new Nuno(320, 256);
         nuno.setSpriteSheet(game.getAssetLoader().loadImage("images/characters/nuno.png"), 5);
@@ -73,7 +74,8 @@ public class TulayStage extends GameStage {
         nuno.render(batch);
         batch.end();
         MenuText.begin(batch);
-        game.getFont().setColor(Color.WHITE);
+        Theme.hintPanel(batch);
+        game.getFont().setColor(Theme.PAPER);
         game.getFont().draw(batch, message, 20, 160);
         game.getFont().draw(batch, "Riddles: " + nuno.getAnsweredCount() + "/3", 20, 135);
         if (nuno.hasStarted() && !nuno.isComplete()) {

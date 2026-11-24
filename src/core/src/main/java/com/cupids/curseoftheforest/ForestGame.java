@@ -9,6 +9,7 @@ import com.cupids.curseoftheforest.player.Player;
 import com.cupids.curseoftheforest.screens.CutScene;
 import com.cupids.curseoftheforest.screens.GameOverScreen;
 import com.cupids.curseoftheforest.screens.MainMenuScreen;
+import com.cupids.curseoftheforest.screens.Theme;
 import com.cupids.curseoftheforest.stages.GameStage;
 import com.cupids.curseoftheforest.stages.GubatStage;
 import com.cupids.curseoftheforest.stages.MangkukulamStage;
@@ -40,7 +41,7 @@ public class ForestGame extends Game {
     public void create() {
         assetLoader = new AssetLoader();
         batch = new SpriteBatch();
-        font = new BitmapFont();
+        font = Theme.loadFont();
         setScreen(new MainMenuScreen(this));
     }
 
@@ -151,6 +152,7 @@ public class ForestGame extends Game {
         disposeCurrentStage();
         batch.dispose();
         font.dispose();
+        Theme.dispose();
         assetLoader.dispose();
     }
 }

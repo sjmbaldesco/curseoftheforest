@@ -7,20 +7,28 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.player.Player;
+import com.cupids.curseoftheforest.screens.DialogueBox;
 import com.cupids.curseoftheforest.screens.Hud;
+import com.cupids.curseoftheforest.screens.KeyPrompt;
+import com.cupids.curseoftheforest.screens.MenuText;
 import com.cupids.curseoftheforest.screens.Theme;
+import com.cupids.curseoftheforest.screens.Toast;
 
 /**
  * Base class for the five stages. It runs the shared frame loop (input, player physics, coins,
  * timer, win/lose checks, drawing) and leaves the stage's own mechanics to subclasses through
- * {@link #init()}, {@link #update(float)} and {@link #handleInput()}.
+ * {@link #init()}, {@link #update(float)} and {@link #handleInput()}. Stages draw their own
+ * things through {@link #drawWorld} and {@link #drawOverlay}, and talk to the player through the
+ * shared {@link #dialogue} box, {@link #toast} notices, {@link #showPrompt} tags and the HUD goal.
  */
 public abstract class GameStage extends ScreenAdapter {
     /** Caps a frame's delta so a lag spike cannot make the player pass through a tile. */
@@ -46,6 +54,10 @@ public abstract class GameStage extends ScreenAdapter {
     protected Hud hud;
     /** True after the player retries from the game-over screen, so stages can skip story scenes. */
     protected boolean retried;
+    /** Conversations and questions, drawn at the top of the screen. */
+    protected final DialogueBox dialogue = new DialogueBox();
+    /** Short notices that fade on their own. */
+    protected final Toast toast = new Toast();
 
     private final OrthographicCamera camera = new OrthographicCamera();
     private Texture coinTexture;
@@ -56,6 +68,12 @@ public abstract class GameStage extends ScreenAdapter {
     /** Fractions of a point drained so far; stats are whole numbers, so drain is banked. */
     private float courageDrainBank;
     private float sanityDrainBank;
+    /** One-line current objective, shown in the HUD bar. */
+    private String goal = "";
+    /** This frame's "[E] Talk" tag, set by the stage each frame; null when there is none. */
+    private String promptKey;
+    private String promptAction;
+    private final Vector3 promptSpot = new Vector3();
 
     protected GameStage(ForestGame game, String name, String mapPath) {
         this.game = game;
@@ -82,6 +100,35 @@ public abstract class GameStage extends ScreenAdapter {
     /** Sanity lost per second while in this stage. Safe stages keep the default of 0. */
     protected float sanityDrainPerSecond() {
         return 0f;
+    }
+
+    /** Draws the stage's creatures and props in world coordinates; the batch is already started. */
+    protected void drawWorld(SpriteBatch batch) {
+    }
+
+    /** Draws stage extras in window coordinates (960 by 540); the batch is already started. */
+    protected void drawOverlay(SpriteBatch batch) {
+    }
+
+    // ---------------------------------------------------------------- talking to the player
+
+    /** Sets the one-line objective shown in the HUD, e.g. "Talk to the Tikbalang". */
+    protected void setGoal(String goal) {
+        this.goal = goal == null ? "" : goal;
+    }
+
+    String getGoal() {
+        return goal;
+    }
+
+    /**
+     * Shows a "[key] action" tag above a world position for this frame only. Call it every frame
+     * while the tag should show (from {@link #handleInput()} or {@link #update(float)}).
+     */
+    protected void showPrompt(String key, String action, float worldX, float worldY) {
+        promptKey = key;
+        promptAction = action;
+        promptSpot.set(worldX, worldY, 0);
     }
 
     // ---------------------------------------------------------------- lifecycle
@@ -118,6 +165,9 @@ public abstract class GameStage extends ScreenAdapter {
         timer = null;
         courageDrainBank = 0f;
         sanityDrainBank = 0f;
+        goal = "";
+        dialogue.close();
+        toast.clear();
         init();
         hud = new Hud(player, timer, game.getFont(), name);
         hud.setIcons(game.getAssetLoader());
@@ -133,6 +183,20 @@ public abstract class GameStage extends ScreenAdapter {
             game.toMainMenu();
             return;
         }
+        toast.update(delta);
+        dialogue.update(delta);
+        if (dialogue.isBlocking()) {
+            // A conversation pauses the stage: no movement, timers or drain until it is read.
+            if (Gdx.input.isKeyJustPressed(Input.Keys.E)
+                    || Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
+                    || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                dialogue.advance();
+            }
+            promptKey = null;
+            draw();
+            return;
+        }
+        promptKey = null;
         readMovementKeys();
         handleInput();
 
@@ -212,6 +276,7 @@ public abstract class GameStage extends ScreenAdapter {
                 batch.draw(coinTexture, coin.x, coin.y, coin.width, coin.height);
             }
         }
+        drawWorld(batch);
         player.render(batch);
         batch.end();
         if (parallax != null) {
@@ -221,7 +286,20 @@ public abstract class GameStage extends ScreenAdapter {
         }
 
         hud.setDraining(courageDrainPerSecond() > 0, sanityDrainPerSecond() > 0);
+        hud.setGoal(goal);
         hud.render(batch);
+
+        BitmapFont font = game.getFont();
+        MenuText.begin(batch);
+        drawOverlay(batch);
+        if (promptKey != null && !dialogue.isBlocking()) {
+            camera.project(promptSpot, 0, 0, ForestGame.WORLD_WIDTH, ForestGame.WORLD_HEIGHT);
+            KeyPrompt.draw(batch, font, promptKey, promptAction, promptSpot.x, promptSpot.y + 6);
+        }
+        // Under the HUD bar, or just above the item bar while the talking box is up.
+        toast.render(batch, font, dialogue.isOpen() ? 130f : 468f);
+        dialogue.render(batch, font);
+        batch.end();
     }
 
     /** Centers the camera on Dayo without showing anything past the map edges. */

@@ -38,12 +38,16 @@ public class SimulaStage extends GameStage {
         matched = 0;
         solved = false;
         feedback = "";
+        setGoal("Repeat Lola's colours, then reach the exit");
     }
 
     @Override
     public void update(float delta) {
         if (isPreviewing()) {
             previewTime += delta;
+        }
+        if (solved) {
+            setGoal("Head to the exit");
         }
         if (solved && reachedExit()) {
             completed = true;
@@ -87,14 +91,7 @@ public class SimulaStage extends GameStage {
     }
 
     @Override
-    public void render(float delta) {
-        super.render(delta);
-        if (game.getScreen() != this) {
-            return;
-        }
-
-        // The shared HUD leaves the batch set to screen coordinates.
-        SpriteBatch batch = game.getBatch();
+    protected void drawOverlay(SpriteBatch batch) {
         BitmapFont font = game.getFont();
         if (bubblePixel == null) {
             Pixmap pixel = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
@@ -115,7 +112,6 @@ public class SimulaStage extends GameStage {
         previousFontColor.set(font.getColor());
         float scaleX = font.getData().scaleX;
         float scaleY = font.getData().scaleY;
-        batch.begin();
         batch.setColor(BUBBLE_INK);
         batch.draw(bubblePixel, left + 24, bottom - 9, 10, 10, 20, 20, 1, 1, 45, 0, 0, 1, 1, false, false);
         batch.draw(bubblePixel, left, bottom, width, 116);
@@ -146,7 +142,6 @@ public class SimulaStage extends GameStage {
             font.draw(batch, "1 Red     2 Green     3 Blue     E Replay", textLeft, top - 63);
             font.draw(batch, matched + "/" + PATTERN.length + " correct. " + feedback, textLeft, top - 87);
         }
-        batch.end();
         batch.setPackedColor(previousBatchColor);
         font.getData().setScale(scaleX, scaleY);
         font.setColor(previousFontColor);

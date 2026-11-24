@@ -35,6 +35,7 @@ public class Hud {
     private boolean courageDraining;
     private boolean sanityDraining;
     private float pulseTime;
+    private String goal = "";
     private AssetLoader icons;
     private final Map<String, Texture> iconCache = new HashMap<>();
     private final Matrix4 worldProjection = new Matrix4();
@@ -74,6 +75,11 @@ public class Hud {
         sanityDraining = sanity;
     }
 
+    /** The current objective, shown at the right of the top bar. */
+    public void setGoal(String goal) {
+        this.goal = goal == null ? "" : goal;
+    }
+
     public void render(SpriteBatch batch) {
         pulseTime = (pulseTime + Gdx.graphics.getDeltaTime()) % 1000f;
         worldProjection.set(batch.getProjectionMatrix());
@@ -83,6 +89,10 @@ public class Hud {
         Theme.shade(batch, 0, 478, ForestGame.WORLD_WIDTH, 62);
         font.setColor(Theme.GOLD);
         font.draw(batch, stageName, 16, 534);
+        if (!goal.isEmpty()) {
+            font.setColor(Theme.PAPER);
+            font.draw(batch, goal, 520, 534, 424, Align.right, false);
+        }
         meter(batch, "Courage", player.getCourage(), 16, Theme.COURAGE, courageDraining);
         meter(batch, "Sanity", player.getSanity(), 300, Theme.SANITY, sanityDraining);
         font.setColor(Theme.PAPER);

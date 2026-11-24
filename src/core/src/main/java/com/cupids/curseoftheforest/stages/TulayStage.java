@@ -2,20 +2,22 @@ package com.cupids.curseoftheforest.stages;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.creatures.Nuno;
 import com.cupids.curseoftheforest.minigames.Shop;
-import com.cupids.curseoftheforest.screens.MenuText;
-import com.cupids.curseoftheforest.screens.Theme;
 import com.cupids.curseoftheforest.screens.CutScene;
+import com.cupids.curseoftheforest.screens.DialogueBox;
 
 /** Three food riddles reward the three potion types needed by the next stage. */
 public class TulayStage extends GameStage {
     private static final String[] OFFERINGS = {"Atis", "Sampalok", "Kalabasa"};
     private Nuno nuno;
-    private String message;
+    private TextureRegion nunoPortrait;
+    /** The riddle currently shown in the question box, so it is only re-opened when it changes. */
+    private String askedQuestion = "";
     private CutScene scene;
 
     public TulayStage(ForestGame game) {
@@ -28,9 +30,12 @@ public class TulayStage extends GameStage {
         // The flashback plays once; a retry goes straight back to the riddles.
         scene = retried ? null
                 : new CutScene(CutScene.flashbackOne(), game.getAssetLoader().loadImage("images/backgrounds/flashback-1.png"));
-        message = "Approach Nuno and press E. Tabi-tabi po!";
         nuno = new Nuno(320, 256);
-        nuno.setSpriteSheet(game.getAssetLoader().loadImage("images/characters/nuno.png"), 5);
+        Texture nunoSheet = game.getAssetLoader().loadImage("images/characters/nuno.png");
+        nuno.setSpriteSheet(nunoSheet, 5);
+        nunoPortrait = DialogueBox.portraitFrom(nunoSheet, 5);
+        askedQuestion = "";
+        setGoal("Greet the Nuno: Tabi-tabi po!");
         boolean hasJuice = player.getInventory().has(Shop.MALUNGGAY_JUICE);
         timer = new StageTimer(hasJuice ? 300 : 180);
     }
@@ -39,24 +44,58 @@ public class TulayStage extends GameStage {
     public void update(float delta) {
         nuno.update(delta);
         completed = nuno.isComplete() && reachedExit() && !isFailed();
+        if (nuno.isComplete()) {
+            setGoal("Cross the bridge to the far right exit");
+        } else if (nuno.hasStarted()) {
+            setGoal("Answer the Nuno's riddles (" + nuno.getAnsweredCount() + "/3)");
+        }
+        showRiddle();
+    }
+
+    /** Keeps the riddle box up while Dayo stands by the Nuno, and puts it away when he leaves. */
+    private void showRiddle() {
+        boolean riddleTime = nuno.hasStarted() && !nuno.isComplete() && nuno.isNear(player);
+        if (!riddleTime) {
+            if (dialogue.isOpen() && !dialogue.isBlocking()) dialogue.close();
+            askedQuestion = "";
+            return;
+        }
+        String question = nuno.getQuestion();
+        if (!question.equals(askedQuestion) || !dialogue.isOpen()) {
+            dialogue.ask(nuno.getName(), nunoPortrait, question, OFFERINGS);
+            askedQuestion = question;
+        }
     }
 
     @Override
     protected void handleInput() {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.E) && nuno.isNear(player)) nuno.interact(player);
+        if (!nuno.hasStarted() && nuno.isNear(player)) {
+            showPrompt("E", "Greet", nuno.getX() + 32, nuno.getY() + 64);
+            if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+                nuno.interact(player);
+                dialogue.say(nuno.getName(), nunoPortrait,
+                        "Who walks over my mound without asking?",
+                        "Answer my riddles with the right offering, and I will give you a potion for each.");
+            }
+            return;
+        }
         if (!nuno.hasStarted() || !nuno.isNear(player) || nuno.isComplete() || isFailed()) return;
         for (int i = 0; i < OFFERINGS.length; i++) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1 + i)) {
                 if (nuno.offer(player, OFFERINGS[i])) {
-                    message = "Correct! You received a potion.";
-                    if (nuno.isComplete()) message += " Cross to the far right exit.";
+                    toast.show("Correct! The Nuno gives you a potion.");
                 } else {
                     player.changeSanity(-10);
-                    message = "That is not the offering. Sanity -10. Try again.";
+                    toast.warn("That is not the offering. Sanity -10");
                 }
                 break;
             }
         }
+    }
+
+    @Override
+    protected void drawWorld(SpriteBatch batch) {
+        nuno.render(batch);
     }
 
     @Override
@@ -68,21 +107,6 @@ public class TulayStage extends GameStage {
             return;
         }
         super.render(delta);
-        if (game.getScreen() != this) return;
-        SpriteBatch batch = game.getBatch();
-        hud.beginWorld(batch);
-        nuno.render(batch);
-        batch.end();
-        MenuText.begin(batch);
-        Theme.hintPanel(batch);
-        game.getFont().setColor(Theme.PAPER);
-        game.getFont().draw(batch, message, 20, 160);
-        game.getFont().draw(batch, "Riddles: " + nuno.getAnsweredCount() + "/3", 20, 135);
-        if (nuno.hasStarted() && !nuno.isComplete()) {
-            game.getFont().draw(batch, nuno.getQuestion(), 20, 110);
-            game.getFont().draw(batch, "Near Nuno: 1 Atis    2 Sampalok    3 Kalabasa", 20, 85);
-        }
-        batch.end();
     }
 
     @Override

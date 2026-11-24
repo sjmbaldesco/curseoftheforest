@@ -5,16 +5,15 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.utils.Align;
 import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.creatures.GlowingBush;
 import com.cupids.curseoftheforest.creatures.Tikbalang;
 import com.cupids.curseoftheforest.minigames.Shop;
 import com.cupids.curseoftheforest.player.Player;
-import com.cupids.curseoftheforest.screens.MenuText;
+import com.cupids.curseoftheforest.screens.DialogueBox;
 import com.cupids.curseoftheforest.screens.Theme;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,8 +47,8 @@ public class GubatStage extends GameStage {
     private final List<GlowingBush> bushes = new ArrayList<>();
     /** Clue pieces found so far (the proposal's ArrayList of collected pieces). */
     private final List<String> pieces = new ArrayList<>();
-    private String message;
     private Texture pixel;
+    private TextureRegion tikbalangPortrait;
     private boolean hasBushSprite;
 
     public GubatStage(ForestGame game) {
@@ -76,7 +75,9 @@ public class GubatStage extends GameStage {
             spot = new Rectangle(tileMap.getSpawn().x + 128, tileMap.getSpawn().y, 64, 64);
         }
         tikbalang = new Tikbalang(spot.x, spot.y, timer);
-        tikbalang.setSpriteSheet(game.getAssetLoader().loadImage("images/tikbalang.png"), 5);
+        Texture tikbalangSheet = game.getAssetLoader().loadImage("images/tikbalang.png");
+        tikbalang.setSpriteSheet(tikbalangSheet, 5);
+        tikbalangPortrait = DialogueBox.portraitFrom(tikbalangSheet, 5);
 
         hasBushSprite = Gdx.files.internal(BUSH_IMAGE).exists();
         bushes.clear();
@@ -89,9 +90,10 @@ public class GubatStage extends GameStage {
             bushes.add(bush);
         }
         pieces.clear();
-        message = player.getInventory().has(Shop.AGIMAT)
-                ? "The Agimat glows: your mind is shielded. Walk to the Tikbalang and press E."
-                : "Walk to the Tikbalang and press E.";
+        setGoal("Talk to the Tikbalang");
+        if (player.getInventory().has(Shop.AGIMAT)) {
+            toast.show("The Agimat glows: your mind is shielded.");
+        }
     }
 
     private static String pieceFor(int bushIndex) {
@@ -111,18 +113,26 @@ public class GubatStage extends GameStage {
     @Override
     protected void handleInput() {
         boolean pressedE = Gdx.input.isKeyJustPressed(Input.Keys.E);
-        if (pressedE && !tikbalang.hasChallenged() && tikbalang.isNear(player)) {
-            tikbalang.interact(player);
-            message = tikbalang.getLine();
-            return;
+        if (!tikbalang.hasChallenged() && tikbalang.isNear(player)) {
+            showPrompt("E", "Talk", tikbalang.getX() + 32, tikbalang.getY() + 64);
+            if (pressedE) {
+                tikbalang.interact(player);
+                dialogue.say(tikbalang.getName(), tikbalangPortrait, tikbalang.getLine());
+                return;
+            }
         }
 
         boolean holdingE = Gdx.input.isKeyPressed(Input.Keys.E);
         for (GlowingBush bush : bushes) {
-            boolean canSearch = holdingE && bush.isNear(player) && !bush.isSearched();
+            boolean near = bush.isNear(player) && !bush.isSearched();
+            if (near && !bush.isSearching()) {
+                Rectangle b = bush.getBounds();
+                showPrompt("E", timer.isRunning() ? "Hold to search" : "Locked", b.x + b.width / 2, b.y + b.height + 8);
+            }
+            boolean canSearch = holdingE && near;
             if (canSearch && !timer.isRunning()) {
                 if (pressedE) {
-                    message = "The bushes will not open yet. Talk to the Tikbalang first.";
+                    toast.show("The bushes will not open yet. Talk to the Tikbalang first.");
                 }
             } else if (canSearch) {
                 bush.interact(player); // does nothing if this bush is already being searched
@@ -144,22 +154,29 @@ public class GubatStage extends GameStage {
         }
 
         if (hasAllPieces()) {
+            setGoal("The spell is broken: run to the exit");
             completed = reachedExit() && !isFailed();
-        } else if (reachedExit() && tikbalang.hasChallenged()) {
-            message = "The path loops back into the forest. Find every piece of the clue first.";
+        } else if (tikbalang.hasChallenged()) {
+            setGoal("Clue: " + clueSoFar() + "  (" + pieces.size() + "/" + CLUE.length + ")");
+            if (reachedExit()) {
+                toast.show("The path loops back into the forest. Find every piece first.");
+            }
         }
     }
 
     private void onBushSearched(GlowingBush bush) {
         String piece = bush.takePiece();
         if (piece == null) {
-            message = "Only leaves here... and " + bush.getCoins() + " coin.";
+            toast.show("Only leaves here... and " + bush.getCoins() + " coin.");
             return;
         }
         pieces.add(piece);
-        message = hasAllPieces()
-                ? "\"Baliktarin ang damit!\" Dayo turns his shirt inside out. The spell breaks. Run to the exit!"
-                : "You found a piece of the clue: \"" + piece + "\"";
+        if (hasAllPieces()) {
+            dialogue.say("Dayo", null, "\"Baliktarin ang damit!\" Dayo turns his shirt inside out.",
+                    "The forest stops spinning. The spell is broken. Run to the exit!");
+        } else {
+            toast.show("You found a piece of the clue: \"" + piece + "\"");
+        }
     }
 
     boolean hasAllPieces() {
@@ -180,31 +197,21 @@ public class GubatStage extends GameStage {
     // ---------------------------------------------------------------- drawing
 
     @Override
-    public void render(float delta) {
-        super.render(delta);
-        if (game.getScreen() != this) {
-            return;
-        }
-        SpriteBatch batch = game.getBatch();
-        hud.beginWorld(batch);
+    protected void drawWorld(SpriteBatch batch) {
         drawBushes(batch);
         tikbalang.render(batch);
-        batch.end();
-
-        MenuText.begin(batch);
-        Theme.hintPanel(batch);
-        BitmapFont font = game.getFont();
-        font.setColor(Theme.PAPER);
-        font.draw(batch, message, 20, 175, 920, Align.left, true);
-        font.draw(batch, "Clue: " + clueSoFar() + "   (" + pieces.size() + "/" + CLUE.length + ")", 20, 125);
         GlowingBush searching = searchingBush();
         if (searching != null) {
-            int percent = (int) (searching.getProgress() * 100);
-            font.draw(batch, "Searching the bush... " + percent + "%  (keep holding E)", 20, 100);
-        } else if (timer.isRunning() && !hasAllPieces()) {
-            font.draw(batch, "Hold E at a glowing bush to search it.", 20, 100);
+            // Search progress bar just above the bush.
+            Rectangle b = searching.getBounds();
+            float width = Math.max(b.width, 32f);
+            float x = b.x + b.width / 2 - width / 2;
+            batch.setColor(Theme.INK);
+            batch.draw(pixel(), x - 1, b.y + b.height + 5, width + 2, 6);
+            batch.setColor(Theme.GOLD);
+            batch.draw(pixel(), x, b.y + b.height + 6, width * searching.getProgress(), 4);
+            batch.setColor(Color.WHITE);
         }
-        batch.end();
     }
 
     /** Placeholder until the art thread adds bush sprites: a glowing green block, dark when emptied. */

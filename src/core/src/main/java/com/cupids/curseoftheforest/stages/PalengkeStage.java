@@ -14,7 +14,6 @@ import com.cupids.curseoftheforest.items.Item;
 import com.cupids.curseoftheforest.minigames.InsufficientCoinsException;
 import com.cupids.curseoftheforest.minigames.Shop;
 import com.cupids.curseoftheforest.player.Player;
-import com.cupids.curseoftheforest.screens.MenuText;
 import java.util.List;
 
 /**
@@ -49,6 +48,7 @@ public class PalengkeStage extends GameStage {
         catchCooldown = 0f;
         reachedShop = false;
         shopMessage = "";
+        setGoal("Grab coins and reach Tonyo's stall. Outrun the Wakwak!");
     }
 
     @Override
@@ -68,6 +68,7 @@ public class PalengkeStage extends GameStage {
             courageLost = Math.min(player.getCourage(), penalty);
             player.changeCourage(-courageLost);
             catchCooldown = CATCH_COOLDOWN;
+            toast.warn("The Wakwak caught you! Courage -" + courageLost);
         }
     }
 
@@ -148,24 +149,11 @@ public class PalengkeStage extends GameStage {
         }
 
         super.render(delta);
-        if (game.getScreen() != this) {
-            return;
-        }
+    }
 
-        SpriteBatch batch = game.getBatch();
-        hud.beginWorld(batch);
+    @Override
+    protected void drawWorld(SpriteBatch batch) {
         wakwak.render(batch);
-        batch.end();
-
-        BitmapFont font = game.getFont();
-        MenuText.begin(batch);
-        font.draw(batch, "Collect coins and reach the exit. Wakwak is following you!",
-                12, ForestGame.WORLD_HEIGHT - 82);
-        if (catchCooldown > 0f) {
-            font.draw(batch, "Wakwak caught you! -" + courageLost + " Courage",
-                    12, ForestGame.WORLD_HEIGHT - 104);
-        }
-        batch.end();
     }
 
     private void drawShop() {

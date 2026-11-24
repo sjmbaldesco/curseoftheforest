@@ -131,13 +131,14 @@ A stage may add its own named markers and object layers. Stage 3 (`gubat.tmx`) a
 
 ## Testing
 
-`./gradlew test` (from `src/`) runs 38 JUnit 5 tests covering:
+`./gradlew test` (from `src/`) runs 43 JUnit 5 tests covering:
 
 - player movement, collision and stats;
 - the stage timer (including the paused Stage 3 clock);
 - per-stage Courage/Sanity drain;
 - Tiled map markers and the `gubat.tmx` map contract;
 - bush searching with and without weapons, and the Tikbalang starting the timer;
+- the dialogue box (typing, paging, questions that do not pause) and fading notices;
 - the Agimat timer and Sanity shield, riddles, cutscenes and the potion duel (including a duel Dayo can lose).
 
 Every stage was also smoke-run from the intro to the duel before release.

@@ -38,6 +38,7 @@ public class ForestGame extends Game {
     private AssetLoader assetLoader;
     private SpriteBatch batch;
     private BitmapFont font;
+    private BitmapFont titleFont;
     private Player player;
     private GameStage currentStage;
     private CutScene introScene;
@@ -86,6 +87,7 @@ public class ForestGame extends Game {
         assetLoader = new AssetLoader();
         batch = new SpriteBatch();
         font = Theme.loadFont();
+        titleFont = Theme.loadTitleFont();
         setScreen(new MainMenuScreen(this));
     }
 
@@ -187,6 +189,11 @@ public class ForestGame extends Game {
         return font;
     }
 
+    /** The big pixel font for headings (game title, "Game Over"). */
+    public BitmapFont getTitleFont() {
+        return titleFont;
+    }
+
     public Player getPlayer() {
         return player;
     }
@@ -198,6 +205,7 @@ public class ForestGame extends Game {
         disposeCurrentStage();
         batch.dispose();
         font.dispose();
+        titleFont.dispose();
         Theme.dispose();
         assetLoader.dispose();
     }

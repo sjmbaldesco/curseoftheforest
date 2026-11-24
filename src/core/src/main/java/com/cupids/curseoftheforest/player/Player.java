@@ -30,6 +30,8 @@ public class Player {
     private static final float WALK_FRAME_SECONDS = 0.12f;
     /** Transparent rows under Dayo's feet in his sprite sheet. */
     private static final float FEET_OFFSET = 3f;
+    /** Dayo's sheet (images/dayo.png) is drawn facing left, so it is mirrored when he walks right. */
+    static final boolean SHEET_FACES_LEFT = true;
 
     private int courage = MAX_STAT;
     private int sanity = MAX_STAT;
@@ -150,7 +152,7 @@ public class Player {
         int frame = currentFrame();
         float drawX = x + WIDTH / 2 - frameSize / 2f;
         batch.draw(sprite, drawX, y - FEET_OFFSET, frameSize, frameSize,
-                frame * frameSize, 0, frameSize, frameSize, !facingRight, false);
+                frame * frameSize, 0, frameSize, frameSize, facingRight == SHEET_FACES_LEFT, false);
     }
 
     /**

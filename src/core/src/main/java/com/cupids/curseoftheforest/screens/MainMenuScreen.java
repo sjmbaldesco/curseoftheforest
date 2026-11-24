@@ -39,8 +39,9 @@ public class MainMenuScreen extends ScreenAdapter {
         Theme.drawBackdrop(batch, backdrop);
         Theme.rect(batch, Theme.LEAF, 0, 0, ForestGame.WORLD_WIDTH, 8);
         Theme.rect(batch, Theme.GOLD, 280, 322, 400, 4);
-        MenuText.centered(batch, font, "Curse of the Forest", 400, 4f, Theme.PAPER);
-        MenuText.centered(batch, font, "Harana sa Dilim", 308, 2f, Theme.GOLD);
+        BitmapFont title = game.getTitleFont();
+        MenuText.centered(batch, title, "Curse of the Forest", 400, 4f, Theme.PAPER);
+        MenuText.centered(batch, title, "Harana sa Dilim", 308, 2f, Theme.GOLD);
         Theme.panel(batch, 330, 130, 300, 120);
         font.setColor(Theme.INK);
         MenuText.centered(batch, font, "ENTER  New Game", 214, 2f);

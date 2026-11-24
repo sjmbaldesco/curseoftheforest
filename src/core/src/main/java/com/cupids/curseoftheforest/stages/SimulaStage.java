@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.creatures.LolaPacita;
+import com.cupids.curseoftheforest.screens.Theme;
 
 /** Stage 1: repeat the color sequence before leaving the map. */
 public class SimulaStage extends GameStage {
@@ -122,9 +123,9 @@ public class SimulaStage extends GameStage {
 
         float textLeft = left + 16;
         font.setColor(BUBBLE_INK);
-        font.getData().setScale(1.4f);
+        Theme.setScale(font, 1.4f);
         font.draw(batch, lolaPacita.getName(), textLeft, top - 12);
-        font.getData().setScale(1.15f);
+        Theme.setScale(font, 1.15f);
         if (isPreviewing()) {
             int index = (int) (previewTime / SECONDS_PER_COLOR);
             int colorIndex = PATTERN[index] - 1;

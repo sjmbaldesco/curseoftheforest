@@ -49,6 +49,7 @@ Filipino students and casual players interested in Philippine folklore and cultu
 - Tiled map editor for levels (`.tmx`)
 - Gradle 8.14 (wrapper included)
 - JUnit 5 for unit tests
+- Fonts: VCR OSD Mono (body text, turned into a bitmap font by `tools/make_bitmap_font.py`) and Pixelify Sans (titles, OFL)
 
 ## How to run
 
@@ -132,7 +133,7 @@ A stage may add its own named markers and object layers. Stage 2 (`palengke.tmx`
 
 ## Testing
 
-`./gradlew test` (from `src/`) runs 55 JUnit 5 tests covering:
+`./gradlew test` (from `src/`) runs 58 JUnit 5 tests covering:
 
 - player movement, collision and stats;
 - the stage timer (including the paused Stage 3 clock);
@@ -141,6 +142,7 @@ A stage may add its own named markers and object layers. Stage 2 (`palengke.tmx`
 - bush searching with and without weapons, and the Tikbalang starting the timer;
 - the dialogue box (typing, paging, questions that do not pause) and fading notices;
 - full-screen scaling (16:9, 16:10 and ultrawide screens keep the game's shape);
+- ambient effects (fireflies, falling leaves and cave dust stay on screen and blink within range, each stage gets its own mix);
 - Wakwak Cave torches (5 s burn, 10 s relight, light radius), the swarm's slowdown and retreat, the Rosary, and the cave map contract;
 - the Agimat timer and Sanity shield, riddles and the Nuno's reset, Stage 4's fear vision, cutscenes and the potion duel (including a duel Dayo can lose).
 

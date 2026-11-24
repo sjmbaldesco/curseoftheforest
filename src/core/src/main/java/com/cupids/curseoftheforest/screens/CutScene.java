@@ -3,7 +3,6 @@ package com.cupids.curseoftheforest.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -19,6 +18,7 @@ public class CutScene extends ScreenAdapter {
     private SpriteBatch batch;
     private BitmapFont font;
     private Runnable onFinished;
+    private float blink;
 
     public CutScene(String[] lines, Texture background) {
         this.lines = Objects.requireNonNull(lines, "lines").clone();
@@ -39,7 +39,7 @@ public class CutScene extends ScreenAdapter {
 
     @Override
     public void show() {
-        if (batch == null) { batch = new SpriteBatch(); font = Theme.loadFont(); }
+        if (batch == null) { batch = new SpriteBatch(); font = Theme.font(Theme.Size.TALK); }
     }
 
     @Override
@@ -53,14 +53,18 @@ public class CutScene extends ScreenAdapter {
             action.run();
             return;
         }
+        blink = (blink + delta) % 1000f;
         ScreenUtils.clear(Theme.NIGHT);
         MenuText.begin(batch);
         if (background != null) batch.draw(background, 0, 0, 960, 540);
-        Theme.panel(batch, 24, 380, 912, 136);
-        font.setColor(Theme.INK);
-        font.draw(batch, getCurrentLine(), 48, 496, 864, Align.left, true);
-        font.setColor(Theme.LEAF);
-        font.draw(batch, isFinished() ? "Scene complete" : "Enter / Space: continue", 48, 412);
+        // Caption in the talk-box frame along the bottom (mockup 11).
+        UiSkin.frame(batch, UiSkin.Frame.TALKBOX, 40, 32, 880, 116);
+        font.setColor(Theme.PAPER);
+        font.draw(batch, getCurrentLine(), 72, 130, 816, Align.left, true);
+        Theme.textRight(batch, Theme.Size.BODY, "[ENTER] continue", 880, 58, Theme.GOLD);
+        if ((int) (blink * 2) % 2 == 0) {
+            UiSkin.triangle(batch, Theme.GOLD, 888, 52);
+        }
         batch.end();
     }
 
@@ -68,7 +72,7 @@ public class CutScene extends ScreenAdapter {
 
     @Override
     public void dispose() {
-        if (batch != null) { batch.dispose(); font.dispose(); batch = null; font = null; }
+        if (batch != null) { batch.dispose(); batch = null; font = null; } // the font belongs to Theme
         // Background is shared and disposed by AssetLoader.
     }
 

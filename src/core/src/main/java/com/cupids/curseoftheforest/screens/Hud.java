@@ -48,6 +48,8 @@ public class Hud {
     private AssetLoader icons;
     private final Map<String, Texture> iconCache = new HashMap<>();
     private final Map<PotionType, Animation<TextureRegion>> potionCache = new HashMap<>();
+    /** Item slots in the bar; more items show as "+N". */
+    static final int SLOTS = 8;
     private final Matrix4 worldProjection = new Matrix4();
     private final Matrix4 screen = new Matrix4().setToOrtho2D(0, 0, ForestGame.WORLD_WIDTH, ForestGame.WORLD_HEIGHT);
 
@@ -56,6 +58,17 @@ public class Hud {
         this.timer = timer;
         this.font = font;
         this.stageName = stageName;
+    }
+
+    /** The animated bottle sheet for a potion kind (64 px frames). Also used by the duel. */
+    public static String potionSheet(PotionType type) {
+        return POTION_SHEETS.get(type);
+    }
+
+    /** The icon file for an item name (images/icons/...), or null if it has none. Also used by the shop. */
+    public static String iconPath(String itemName) {
+        String file = ICON_FILES.get(itemName);
+        return file == null ? null : "images/icons/" + file + ".png";
     }
 
     /** Lets the HUD draw item icons; without it the item list stays text-only. */
@@ -106,51 +119,85 @@ public class Hud {
     public void render(SpriteBatch batch) {
         pulseTime = (pulseTime + Gdx.graphics.getDeltaTime()) % 1000f;
         worldProjection.set(batch.getProjectionMatrix());
-        Color color = new Color(font.getColor());
         batch.setProjectionMatrix(screen);
         batch.begin();
-        Theme.shade(batch, 0, 478, ForestGame.WORLD_WIDTH, 62);
-        font.setColor(Theme.GOLD);
-        font.draw(batch, stageName, 16, 534);
-        if (!goal.isEmpty()) {
-            font.setColor(Theme.PAPER);
-            font.draw(batch, goal, 520, 534, 424, Align.right, false);
+        drawTopBand(batch);
+        drawItemBar(batch);
+        batch.end();
+        // Earlier stages draw their overlays next and expect screen coordinates.
+    }
+
+    /** Layout from the UI spec (mockup 01), converted from top-left to LibGDX's bottom-left origin. */
+    private void drawTopBand(SpriteBatch batch) {
+        float top = ForestGame.WORLD_HEIGHT;
+        if (!UiSkin.image(batch, "hud-strip", 0, top - 62, ForestGame.WORLD_WIDTH, 62)) {
+            Theme.shade(batch, 0, top - 62, ForestGame.WORLD_WIDTH, 62);
         }
-        meter(batch, "Courage", player.getCourage(), 16, Theme.COURAGE, courageDraining);
-        meter(batch, "Sanity", player.getSanity(), 300, Theme.SANITY, sanityDraining);
-        font.setColor(Theme.PAPER);
-        font.draw(batch, "Coins: " + player.getCoins(), 600, 500);
+        Theme.text(batch, Theme.Size.BODY, stageName, 16, top - 6, Theme.GOLD);
+
+        float courageEnd = meter(batch, "icon-courage", "Courage", player.getCourage(), 16, "bar-courage", courageDraining);
+        float sanityEnd = meter(batch, "icon-sanity", "Sanity", player.getSanity(), 380, "bar-sanity", sanityDraining);
+
+        UiSkin.image(batch, "icon-coin", 700, top - 30);
+        Theme.text(batch, Theme.Size.TALK, String.valueOf(player.getCoins()), 732, top - 8, Theme.PAPER);
         if (timer != null) {
             int seconds = (int) Math.ceil(timer.getRemaining());
-            font.setColor(seconds <= 10 ? Theme.WARNING : Theme.PAPER);
-            font.draw(batch, String.format("Time %d:%02d", seconds / 60, seconds % 60), 760, 500);
-        }
-        Theme.shade(batch, 0, 0, ForestGame.WORLD_WIDTH, 56);
-        font.setColor(Theme.PAPER);
-        float x = 16;
-        font.draw(batch, "Items:", x, 38);
-        x += 76;
-        StringBuilder names = new StringBuilder();
-        int count = 0;
-        for (Item item : player.getInventory().getAll()) {
-            if (count++ == 8) {
-                names.append(" +").append(player.getInventory().getAll().size() - 8).append(" more");
-                break;
-            }
-            TextureRegion icon = iconFrameFor(item);
-            if (icon != null) {
-                batch.draw(icon, x, 4, 44, 44);
-                x += 52;
-            } else {
-                if (names.length() > 0) names.append(", ");
-                names.append(item.getName());
+            boolean hurry = seconds < 10;
+            UiSkin.image(batch, "icon-timer", 780, top - 30);
+            // Under 10 seconds the clock turns red and blinks twice a second.
+            if (!hurry || (int) (pulseTime * 2) % 2 == 0) {
+                Theme.text(batch, Theme.Size.TALK, String.format("%d:%02d", seconds / 60, seconds % 60), 812, top - 8,
+                        hurry ? Theme.WARNING : Theme.PAPER);
             }
         }
-        if (count == 0) names.append("none");
-        font.draw(batch, names.toString(), x + 8, 38, ForestGame.WORLD_WIDTH - x - 24, Align.left, false);
-        batch.end();
-        font.setColor(color);
-        // Earlier stages draw their overlays next and expect screen coordinates.
+        if (!goal.isEmpty()) {
+            // The goal shares the second row with the meters: it gets the space right of them,
+            // and drops to the small font (then trims) if it is long.
+            float room = 944 - Math.max(courageEnd, sanityEnd) - 24;
+            Theme.Size size = Theme.width(Theme.font(Theme.Size.BODY), goal) <= room ? Theme.Size.BODY : Theme.Size.SMALL;
+            String shown = fit(Theme.font(size), goal, room);
+            Theme.textRight(batch, size, shown, 944, top - 38, Theme.GOLD);
+        }
+    }
+
+    /** Trims text with "..." until it fits the width. */
+    static String fit(BitmapFont font, String text, float width) {
+        if (Theme.width(font, text) <= width) {
+            return text;
+        }
+        String trimmed = text;
+        while (trimmed.length() > 1 && Theme.width(font, trimmed + "...") > width) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed.trim() + "...";
+    }
+
+    /** The item bar: eight slots centred along the bottom, with the slot number in each corner. */
+    private void drawItemBar(SpriteBatch batch) {
+        if (!UiSkin.image(batch, "itembar-strip", 0, 0, ForestGame.WORLD_WIDTH, 56)) {
+            Theme.shade(batch, 0, 0, ForestGame.WORLD_WIDTH, 56);
+        }
+        Theme.text(batch, Theme.Size.BODY, "ITEMS", 16, 540 - 508, Theme.GOLD);
+        java.util.List<Item> items = player.getInventory().getAll();
+        for (int i = 0; i < SLOTS; i++) {
+            float x = 256 + i * 56;
+            UiSkin.frame(batch, UiSkin.Frame.SLOT, x, 4, 48, 48);
+            if (i < items.size()) {
+                Item item = items.get(i);
+                TextureRegion icon = iconFrameFor(item);
+                if (icon != null) {
+                    batch.draw(icon, x, 4, 48, 48);
+                } else {
+                    // No art yet: the item's first letter keeps the slot readable.
+                    Theme.textCentred(batch, Theme.Size.TALK, item.getName().substring(0, 1), x + 24, 38, Theme.PAPER);
+                }
+            }
+            String number = String.valueOf(i + 1);
+            Theme.title(batch, Theme.Size.SMALL, number, x + 42, 20, Theme.PAPER);
+        }
+        if (items.size() > SLOTS) {
+            Theme.text(batch, Theme.Size.BODY, "+" + (items.size() - SLOTS), 256 + SLOTS * 56, 36, Theme.PAPER);
+        }
     }
 
     /** Stages with creature sprites can resume the camera used before the HUD. */
@@ -160,16 +207,31 @@ public class Hud {
     }
 
     /**
-     * Filled bar (0 to 100) with its label; turns salmon-red text when low. While draining, the
-     * border pulses red and the label says so.
+     * Icon, label, a framed bar and the value, on the HUD's second row (y = 36 from the top).
+     * While the stat drains, the fill flashes to the drain colour every 0.25 s and a drain mark
+     * shows after the value. Returns the x where the value ends.
      */
-    private void meter(SpriteBatch batch, String label, int value, float x, Color fill, boolean draining) {
+    private float meter(SpriteBatch batch, String icon, String label, int value, float x, String fill, boolean draining) {
+        float rowTop = ForestGame.WORLD_HEIGHT - 36;
         int clamped = Math.max(0, Math.min(100, value));
-        font.setColor(value <= 25 ? Theme.WARNING : Theme.PAPER);
-        font.draw(batch, label + " " + value + (draining ? "  draining" : ""), x, 516);
-        boolean pulseOn = draining && (int) (pulseTime * 3) % 2 == 0;
-        Theme.rect(batch, pulseOn ? Theme.WARNING : Theme.INK, x - 2, 480, 204, 14);
-        Theme.rect(batch, Theme.NIGHT, x, 482, 200, 10);
-        Theme.rect(batch, value <= 25 ? Theme.WARNING : fill, x, 482, 2f * clamped, 10);
+        UiSkin.image(batch, icon, x, rowTop - 22);
+        Theme.text(batch, Theme.Size.BODY, label, x + 28, rowTop - 2, Theme.PAPER);
+        float frameX = x + 28 + Theme.width(Theme.font(Theme.Size.BODY), label) + 10;
+        frameX = Math.round(frameX / 2) * 2; // stay on the 2x pixel grid
+        UiSkin.frame(batch, UiSkin.Frame.BAR, frameX, rowTop - 20, 150, 20);
+        boolean flash = draining && (int) (pulseTime * 4) % 2 == 0;
+        float width = 138f * clamped / 100f;
+        if (width > 0 && !UiSkin.image(batch, flash ? "bar-drain" : fill, frameX + 6, rowTop - 14, width, 8)) {
+            Theme.rect(batch, flash ? Theme.WARNING : Theme.COURAGE, frameX + 6, rowTop - 14, width, 8);
+        }
+        String shown = String.valueOf(value);
+        float valueX = frameX + 158;
+        Theme.text(batch, Theme.Size.BODY, shown, valueX, rowTop - 2, value <= 25 ? Theme.WARNING : Theme.PAPER);
+        float end = valueX + Theme.width(Theme.font(Theme.Size.BODY), shown);
+        if (draining) {
+            UiSkin.image(batch, "icon-drain", end + 8, rowTop - 16);
+            end += 24;
+        }
+        return end;
     }
 }

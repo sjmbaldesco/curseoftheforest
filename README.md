@@ -49,7 +49,7 @@ Filipino students and casual players interested in Philippine folklore and cultu
 - Tiled map editor for levels (`.tmx`)
 - Gradle 8.14 (wrapper included)
 - JUnit 5 for unit tests
-- Fonts: VCR OSD Mono (body text, turned into a bitmap font by `tools/make_bitmap_font.py`) and Pixelify Sans (titles, OFL)
+- Font: VCR OSD Mono by Riciery Leal (DaFont, "100% Free"), turned into crisp bitmap fonts at 14, 16, 20, 28 and 56 px by `tools/make_bitmap_font.py`. See `CREDITS.md`.
 
 ## How to run
 
@@ -93,13 +93,14 @@ curseoftheforest/
 │   │   ├── ForestGame, AssetLoader
 │   │   ├── player/          Player, Inventory
 │   │   ├── stages/          GameStage + 5 stages, StageTimer, TileMap, Checkpoint
-│   │   ├── screens/         MainMenuScreen, GameOverScreen, CutScene, Hud
+│   │   ├── screens/         MainMenuScreen, GameOverScreen, CutScene, Hud, UiSkin (wooden UI frames)
 │   │   ├── items/           Item, Weapon, Consumable, Accessory, Potion
 │   │   ├── creatures/       Interactable, Creature + 6 creatures, GlowingBush
 │   │   └── minigames/       Shop, InsufficientCoinsException, Riddle, PotionDuel, PotionType
 │   ├── lwjgl3/              desktop launcher (Main)
-│   └── assets/              maps/ (Tiled), images/ (animated/ and parallax-v2/ hold the Blender-made sprites)
-├── design/                  UI references and the Blender export notes (design/blender/MANIFEST.md)
+│   └── assets/              maps/ (Tiled), images/ (ui/ holds the UI pieces; animated/ and parallax-v2/ the Blender sprites), fonts/
+├── design/                  UI mockups and spec (design/ui-revamp/UI-SPEC.md), references, Blender export notes
+├── CREDITS.md               fonts, art and libraries
 ├── docs/                    UML class diagram
 ├── screenshots/
 └── README.md
@@ -134,14 +135,14 @@ A stage may add its own named markers and object layers. Stage 2 (`palengke.tmx`
 
 ## Testing
 
-`./gradlew test` (from `src/`) runs 63 JUnit 5 tests covering:
+`./gradlew test` (from `src/`) runs 64 JUnit 5 tests covering:
 
 - player movement, collision and stats;
 - the stage timer (including the paused Stage 3 clock);
 - per-stage Courage/Sanity drain;
 - Tiled map markers and the `gubat.tmx` map contract;
 - bush searching with and without weapons, and the Tikbalang starting the timer;
-- the dialogue box (typing, paging, questions that do not pause) and fading notices;
+- the dialogue box (typing, paging, questions that do not pause), fading notices and the game-over reason;
 - full-screen scaling (16:9, 16:10 and ultrawide screens keep the game's shape);
 - ambient effects (fireflies, falling leaves and cave dust stay on screen and blink within range, each stage gets its own mix);
 - scenery art: the Blender parallax-v2 layers load first with the older art as fallback, and swaying grass and ferns grow only on top of ground tiles, the same way every time;
@@ -152,9 +153,9 @@ Every stage was also smoke-run from the intro to the duel before release.
 
 ## Screenshots
 
-| Main menu | Stage 1: Ang Simula | Stage 4: Tulay | Stage 5: Potion duel |
+| Main menu | Stage 1: Ang Simula | Tonyo's shop | Stage 5: Potion duel |
 |---|---|---|---|
-| ![Main menu](screenshots/baseline-main-menu.png) | ![Stage 1](screenshots/phebe-merged-simula.png) | ![Stage 4](screenshots/phebe-tulay.png) | ![Stage 5](screenshots/phebe-duel.png) |
+| ![Main menu](screenshots/qa-ui-main-menu.png) | ![Stage 1](screenshots/qa-ui-stage1.png) | ![Shop](screenshots/qa-ui-shop.png) | ![Stage 5](screenshots/qa-ui-duel.png) |
 
 Screenshots of the introduction, Stages 2 and 3 and the ending will be added with the final art.
 

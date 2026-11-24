@@ -4,13 +4,12 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.stages.GameStage;
 
-/** Shown when a stage is lost. Retry restarts that stage from its checkpoint. */
+/** Shown when a stage is lost. Retry restarts that stage from its checkpoint (mockup 07). */
 public class GameOverScreen extends ScreenAdapter {
     private final ForestGame game;
     private Texture backdrop;
@@ -37,17 +36,17 @@ public class GameOverScreen extends ScreenAdapter {
             backdrop = Theme.loadBackdrop(game.getAssetLoader(), "images/backgrounds/game-over.png");
         }
         SpriteBatch batch = game.getBatch();
-        BitmapFont font = game.getFont();
         MenuText.begin(batch);
         Theme.drawBackdrop(batch, backdrop);
-        Theme.rect(batch, Theme.COURAGE, 0, 0, ForestGame.WORLD_WIDTH, 8);
-        MenuText.centered(batch, game.getTitleFont(), "Game Over", 400, 4f, Theme.WARNING);
-        MenuText.centered(batch, font, failedStage.getName(), 330, 2f, Theme.PAPER);
-        Theme.panel(batch, 330, 130, 300, 120);
-        font.setColor(Theme.INK);
-        MenuText.centered(batch, font, "R  Retry stage", 214, 2f);
-        font.setColor(Theme.INK);
-        MenuText.centered(batch, font, "M  Main menu", 166, 2f);
+        float top = ForestGame.WORLD_HEIGHT;
+        UiSkin.frame(batch, UiSkin.Frame.PANEL, 224, top - 436, 512, 352);
+        Theme.title(batch, Theme.Size.HUGE, "Game Over", 480, top - 108, Theme.WARNING);
+        Theme.rect(batch, Theme.GOLD, 260, top - 192, 440, 4);
+        Theme.textCentred(batch, Theme.Size.TALK, failedStage.getName(), 480, top - 212, Theme.GOLD);
+        Theme.textCentred(batch, Theme.Size.BODY, failedStage.failureReason(), 480, top - 248, Theme.PAPER);
+        Theme.textCentred(batch, Theme.Size.SMALL, "Coins and items are restored on retry.", 480, top - 272, Theme.MUTED);
+        MenuText.button(batch, "[R] Retry stage", 302, 316, true);
+        MenuText.button(batch, "[M] Main menu", 366, 316, false);
         batch.end();
     }
 

@@ -3,12 +3,11 @@ package com.cupids.curseoftheforest.stages;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.creatures.LolaPacita;
+import com.cupids.curseoftheforest.screens.DialogueBox;
 import com.cupids.curseoftheforest.screens.Theme;
 
 /** Stage 1: repeat the color sequence before leaving the map. */
@@ -18,12 +17,9 @@ public class SimulaStage extends GameStage {
     private static final Color[] SWATCHES = {
             Color.valueOf("C83E46"), Color.valueOf("318255"), Color.valueOf("396EB8")
     };
-    private static final Color BUBBLE_INK = Color.valueOf("23382E");
-    private static final Color BUBBLE_PAPER = Color.valueOf("FFF3D8");
     private static final float SECONDS_PER_COLOR = 1.2f;
-    private final Color previousFontColor = new Color();
     private final LolaPacita lolaPacita = new LolaPacita(0, 0);
-    private Texture bubblePixel;
+    private TextureRegion lolaPortrait;
     private float previewTime;
     private int matched;
     private boolean solved;
@@ -39,7 +35,7 @@ public class SimulaStage extends GameStage {
         matched = 0;
         solved = false;
         feedback = "";
-        setGoal("Repeat Lola's colours, then reach the exit");
+        setGoal("Repeat Lola's colours");
     }
 
     @Override
@@ -91,68 +87,46 @@ public class SimulaStage extends GameStage {
         return previewTime < PATTERN.length * SECONDS_PER_COLOR;
     }
 
+    /**
+     * Lola's lesson in the shared talk box (mockup 01): her portrait and name, the colour being
+     * shown with its swatch, then the player's turn with the keys to press.
+     */
     @Override
     protected void drawOverlay(SpriteBatch batch) {
-        BitmapFont font = game.getFont();
-        if (bubblePixel == null) {
-            Pixmap pixel = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-            try {
-                pixel.setColor(Color.WHITE);
-                pixel.fill();
-                bubblePixel = new Texture(pixel);
-            } finally {
-                pixel.dispose();
-            }
+        if (lolaPortrait == null) {
+            lolaPortrait = DialogueBox.portraitFrom(game.getAssetLoader().loadImage("images/lola-pacita.png"), 5);
         }
-
-        float left = 20f;
-        float top = ForestGame.WORLD_HEIGHT - 62f;
-        float bottom = top - 116f;
-        float width = 520f;
-        float previousBatchColor = batch.getPackedColor();
-        previousFontColor.set(font.getColor());
-        float scaleX = font.getData().scaleX;
-        float scaleY = font.getData().scaleY;
-        batch.setColor(BUBBLE_INK);
-        batch.draw(bubblePixel, left + 24, bottom - 9, 10, 10, 20, 20, 1, 1, 45, 0, 0, 1, 1, false, false);
-        batch.draw(bubblePixel, left, bottom, width, 116);
-        batch.setColor(BUBBLE_PAPER);
-        batch.draw(bubblePixel, left + 26, bottom - 7, 8, 8, 16, 16, 1, 1, 45, 0, 0, 1, 1, false, false);
-        batch.draw(bubblePixel, left + 2, bottom + 2, width - 4, 112);
-        batch.setColor(Color.WHITE);
-
-        float textLeft = left + 16;
-        font.setColor(BUBBLE_INK);
-        Theme.setScale(font, 1.4f);
-        font.draw(batch, lolaPacita.getName(), textLeft, top - 12);
-        Theme.setScale(font, 1.15f);
+        DialogueBox.drawFrame(batch, lolaPacita.getName(), lolaPortrait, 136);
+        float x = 170;
+        float top = ForestGame.WORLD_HEIGHT - 112;
         if (isPreviewing()) {
             int index = (int) (previewTime / SECONDS_PER_COLOR);
             int colorIndex = PATTERN[index] - 1;
-            font.draw(batch, "Dayo, remember these colors.", textLeft, top - 40);
-            batch.setColor(SWATCHES[colorIndex]);
-            batch.draw(bubblePixel, textLeft, top - 88, 23, 23);
-            batch.setColor(Color.WHITE);
-            font.draw(batch, (index + 1) + "/" + PATTERN.length + "  "
-                    + COLORS[colorIndex], textLeft + 33, top - 67);
+            Theme.text(batch, Theme.Size.TALK, "Dayo, remember these colors.", x, top, Theme.PAPER);
+            Theme.rect(batch, Theme.NIGHT, x, top - 54, 24, 24);
+            Theme.rect(batch, SWATCHES[colorIndex], x + 2, top - 52, 20, 20);
+            Theme.text(batch, Theme.Size.TALK, (index + 1) + "/" + PATTERN.length + "  " + COLORS[colorIndex], x + 36, top - 30, Theme.PAPER);
         } else if (solved) {
-            font.draw(batch, "Well done, Dayo! Take this Rosary and Lumang Gitara.", textLeft, top - 42);
-            font.draw(batch, "Both items are in your inventory. Head to the exit.", textLeft, top - 66);
+            Theme.text(batch, Theme.Size.TALK, "Well done, Dayo! Take this Rosary and Lumang Gitara.", x, top, Theme.PAPER);
+            Theme.text(batch, Theme.Size.BODY, "Both are in your item bar. Head to the exit.", x, top - 34, Theme.GOLD);
         } else {
-            font.draw(batch, "Your turn. Repeat the colors in order.", textLeft, top - 39);
-            font.draw(batch, "1 Red     2 Green     3 Blue     E Replay", textLeft, top - 63);
-            font.draw(batch, matched + "/" + PATTERN.length + " correct. " + feedback, textLeft, top - 87);
+            Theme.text(batch, Theme.Size.TALK, "Your turn. Repeat the colors in order.", x, top, Theme.PAPER);
+            float keyX = x;
+            for (int i = 0; i < COLORS.length; i++) {
+                Theme.text(batch, Theme.Size.TALK, "[" + (i + 1) + "]", keyX, top - 30, Theme.GOLD);
+                Theme.rect(batch, Theme.NIGHT, keyX + 44, top - 52, 20, 20);
+                Theme.rect(batch, SWATCHES[i], keyX + 46, top - 50, 16, 16);
+                Theme.text(batch, Theme.Size.TALK, COLORS[i], keyX + 72, top - 30, Theme.PAPER);
+                keyX += 170;
+            }
+            String status = matched + "/" + PATTERN.length + " correct. " + feedback;
+            Theme.text(batch, Theme.Size.SMALL, status, x, top - 66, feedback.isEmpty() ? Theme.MUTED : Theme.WARNING);
+            Theme.textRight(batch, Theme.Size.SMALL, "[E] Watch again", 924, top - 66, Theme.GOLD);
         }
-        batch.setPackedColor(previousBatchColor);
-        font.getData().setScale(scaleX, scaleY);
-        font.setColor(previousFontColor);
     }
 
     @Override
     public void dispose() {
-        if (bubblePixel != null) {
-            bubblePixel.dispose();
-        }
         super.dispose();
     }
 }

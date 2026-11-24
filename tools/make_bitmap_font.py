@@ -1,11 +1,16 @@
 """Turns a TrueType font into a LibGDX bitmap font (BMFont text .fnt + .png atlas).
 
 The game loads bitmap fonts, so a new .ttf only needs this script, no extra libraries in the game.
-Glyphs are rendered at 2x the size they appear at in the 960x540 window, so text stays sharp in
-1920x1080 full screen; Theme draws the font at half scale.
+Glyphs are drawn without anti-aliasing (hard pixel edges, as the UI spec asks), one font file per
+size, drawn at scale 1 in the 960x540 window. An optional fourth argument sets the line height
+(the gap between lines) in pixels; by default it is 1.25 times the size.
 
-Usage (from the repo root):
-    python3 tools/make_bitmap_font.py src/assets/fonts/VCR_OSD_MONO_1.001.ttf src/assets/fonts/vcr 32
+Usage (from the repo root), the sizes the game uses:
+    python3 tools/make_bitmap_font.py src/assets/fonts/VCR_OSD_MONO_1.001.ttf src/assets/fonts/vcr-14 14
+    python3 tools/make_bitmap_font.py src/assets/fonts/VCR_OSD_MONO_1.001.ttf src/assets/fonts/vcr-16 16
+    python3 tools/make_bitmap_font.py src/assets/fonts/VCR_OSD_MONO_1.001.ttf src/assets/fonts/vcr-20 20 30
+    python3 tools/make_bitmap_font.py src/assets/fonts/VCR_OSD_MONO_1.001.ttf src/assets/fonts/vcr-28 28
+    python3 tools/make_bitmap_font.py src/assets/fonts/VCR_OSD_MONO_1.001.ttf src/assets/fonts/vcr-56 56
 """
 import sys
 from PIL import Image, ImageDraw, ImageFont
@@ -13,7 +18,7 @@ from PIL import Image, ImageDraw, ImageFont
 CHARS = "".join(chr(c) for c in range(32, 127)) + "ñÑéáíóú’‘“”"
 
 
-def main(ttf, out_base, size):
+def main(ttf, out_base, size, line_height=None):
     font = ImageFont.truetype(ttf, size)
     # The baseline is where capital letters stand (this font reports no descent of its own).
     ascent = font.getbbox("H", anchor="la")[3]
@@ -45,14 +50,16 @@ def main(ttf, out_base, size):
     for (ch, (l, t, r, b), adv), (px, py, w, h) in zip(glyphs, places):
         if w and h:
             mask = Image.new("L", (w, h), 0)
-            ImageDraw.Draw(mask).text((-l, -t), ch, font=font, fill=255, anchor="la")
+            draw = ImageDraw.Draw(mask)
+            draw.fontmode = "1"  # no anti-aliasing: every pixel is fully on or off
+            draw.text((-l, -t), ch, font=font, fill=255, anchor="la")
             atlas.paste(Image.new("RGBA", (w, h), (255, 255, 255, 255)), (px, py), mask)
         lowest = max(lowest, b)
 
-    line_height = round(size * 1.25)
+    line_height = line_height or round(size * 1.25)
     name = out_base.replace("\\", "/").split("/")[-1]
     lines = [
-        f'info face="{font.getname()[0]}" size={size} bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=1,1',
+        f'info face="{font.getname()[0]}" size={size} bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=0 aa=0 padding=0,0,0,0 spacing=1,1',
         f"common lineHeight={line_height} base={ascent} scaleW={width} scaleH={height} pages=1 packed=0",
         f'page id=0 file="{name}.png"',
         f"chars count={len(glyphs)}",
@@ -66,4 +73,4 @@ def main(ttf, out_base, size):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], int(sys.argv[3]))
+    main(sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]) if len(sys.argv) > 4 else None)

@@ -22,6 +22,8 @@ import com.cupids.curseoftheforest.screens.KeyPrompt;
 import com.cupids.curseoftheforest.screens.MenuText;
 import com.cupids.curseoftheforest.screens.Theme;
 import com.cupids.curseoftheforest.screens.Toast;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Base class for the five stages. It runs the shared frame loop (input, player physics, coins,
@@ -113,6 +115,29 @@ public abstract class GameStage extends ScreenAdapter {
     // ---------------------------------------------------------------- talking to the player
 
     /** Sets the one-line objective shown in the HUD, e.g. "Talk to the Tikbalang". */
+    /** How far the screen tilts this frame, in degrees. Stage 4's fear vision overrides it. */
+    protected float screenTilt() {
+        return 0f;
+    }
+
+    /** False while coins on the current map should be hidden and cannot be taken. */
+    protected boolean coinsActive() {
+        return true;
+    }
+
+    /**
+     * Shows another map and background in place of this stage's own (Stage 4 sends Dayo back to an
+     * earlier stage in a vision). The stage keeps its own references to swap them back later.
+     */
+    protected void showScenery(TileMap map, ParallaxBackground background) {
+        tileMap = Objects.requireNonNull(map, "map");
+        parallax = background;
+    }
+
+    protected ParallaxBackground getParallax() {
+        return parallax;
+    }
+
     protected void setGoal(String goal) {
         this.goal = goal == null ? "" : goal;
     }
@@ -201,7 +226,7 @@ public abstract class GameStage extends ScreenAdapter {
         handleInput();
 
         player.update(delta, tileMap);
-        if (tileMap.collectCoinAt(player.getBounds())) {
+        if (coinsActive() && tileMap.collectCoinAt(player.getBounds())) {
             player.addCoins(1);
         }
         if (timer != null) {
@@ -268,7 +293,7 @@ public abstract class GameStage extends ScreenAdapter {
         coinTime += Gdx.graphics.getDeltaTime();
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        for (Rectangle coin : tileMap.getCoinMarkers()) {
+        for (Rectangle coin : coinsActive() ? tileMap.getCoinMarkers() : List.<Rectangle>of()) {
             if (coinSpin != null) {
                 // The coin art is 32 px but the map marks coins as 16 px; centre the sprite on the marker.
                 batch.draw(coinSpin.getKeyFrame(coinTime), coin.x + coin.width / 2 - 16, coin.y + coin.height / 2 - 16, 32, 32);
@@ -310,6 +335,12 @@ public abstract class GameStage extends ScreenAdapter {
         camera.position.x = snap(MathUtils.clamp(x, halfW, Math.max(halfW, tileMap.getPixelWidth() - halfW)));
         float y = player.getY() + Player.HEIGHT / 2;
         camera.position.y = snap(MathUtils.clamp(y, halfH, Math.max(halfH, tileMap.getPixelHeight() - halfH)));
+        camera.up.set(0, 1, 0);
+        camera.direction.set(0, 0, -1);
+        float tilt = screenTilt();
+        if (tilt != 0) {
+            camera.rotate(tilt);
+        }
         camera.update();
     }
 

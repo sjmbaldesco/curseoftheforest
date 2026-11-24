@@ -24,4 +24,20 @@ class NunoTest {
         assertEquals(3, player.getInventory().getAll().size());
     }
 
+    @Test void resetTakesBackItsPotionsAndStartsFromTheFirstRiddle() {
+        Player player = new Player(0, 0);
+        player.getInventory().add(new com.cupids.curseoftheforest.items.Accessory("Rosary", 0, "", 0));
+        Nuno nuno = new Nuno(0, 0);
+        nuno.interact(player);
+        assertTrue(nuno.offer(player, "Sampalok"));
+        assertTrue(nuno.offer(player, "Atis"));
+        assertEquals(3, player.getInventory().getAll().size());
+
+        nuno.reset(player);
+        assertEquals(0, nuno.getAnsweredCount());
+        assertTrue(nuno.hasStarted(), "no need to greet it again");
+        assertEquals(1, player.getInventory().getAll().size(), "only the Nuno's potions are taken");
+        assertTrue(player.getInventory().has("Rosary"));
+        assertTrue(nuno.offer(player, "Sampalok"), "the first riddle is asked again");
+    }
 }

@@ -32,7 +32,7 @@ Filipino students and casual players interested in Philippine folklore and cultu
   1. **Ang Simula:** repeat Lola Pacita's color sequence.
   2. **Ang Palengke ng Duwende (Test of Courage):** cross the forest edge, meet Duwende Tonyo, then spend 3 minutes in the Wakwak Cave grabbing coins while a swarm hunts you. Torches burn for 5 s when touched (10 s to relight) and slow any Wakwak in their light. Spend the coins at Tonyo's shop.
   3. **Ang Gubat ng Tikbalang:** talk to the Tikbalang to start the clock, then hold E at glowing bushes to find the three pieces of the clue *"Baliktarin ang damit"* and escape.
-  4. **Tulay ng Nuno sa Punso:** offer the right food for three riddles to earn three potions.
+  4. **Tulay ng Nuno sa Punso:** offer the right food for three riddles to earn three potions. Courage drains while a riddle is up and a wrong offering costs 10 more. At 0 Courage Dayo is not beaten: he falls into an 8-second vision of the Wakwak Cave or the Tikbalang forest, then wakes by the Nuno with 50 Courage, the potions taken back and the riddles starting over.
   5. **Ang Tukso ng Mangkukulam:** potion duel. Stun beats Damage, Damage beats Heal, Heal beats Stun. The witch hides her pick.
 - Item effects that change later stages:
   - The Agimat gives 3 minutes instead of 1.5 in Stage 3, and halves the forest's Sanity drain.
@@ -125,13 +125,13 @@ A stage may add its own named markers and object layers. Stage 2 (`palengke.tmx`
 | Encapsulation | `Player` keeps stats and coins private; `changeCourage()`/`changeSanity()` clamp to 0..100 and `spendCoins()` rejects overspending. `Inventory.getAll()` returns a read-only list. `GlowingBush` hides its search progress and gives its clue piece only once. `StageTimer` owns its paused/running state. Shop item names live in one place (`Shop.AGIMAT`, ...). |
 | Inheritance | `ForestGame extends Game`; `GameStage`, `MainMenuScreen`, `GameOverScreen`, `CutScene` extend `ScreenAdapter`; five stages extend `GameStage`; `Weapon`/`Consumable`/`Accessory` extend `Item`; `Potion extends Consumable`; six creatures extend `Creature`. |
 | Abstraction | `GameStage`, `Item` and `Creature` are abstract; `Interactable` is an interface shared by creatures and `GlowingBush` (a bush is not a creature, but Dayo interacts with both the same way). |
-| Polymorphism | `ForestGame` holds the current stage as a `GameStage` and LibGDX calls `render()` on it; each stage overrides `init()`, `update()` and `handleInput()`, and Stage 3 overrides the drain hooks `courageDrainPerSecond()`/`sanityDrainPerSecond()`. `Item.use()` and `Interactable.interact()` are overridden per class: Tonyo opens the shop, Nuno asks riddles, the Tikbalang starts the timer, a bush starts a search. |
+| Polymorphism | `ForestGame` holds the current stage as a `GameStage` and LibGDX calls `render()` on it; each stage overrides `init()`, `update()` and `handleInput()`, Stages 3 and 4 override the drain hooks `courageDrainPerSecond()`/`sanityDrainPerSecond()`, and Stage 4 overrides `isFailed()` so 0 Courage starts a vision instead of a game over. `Item.use()` and `Interactable.interact()` are overridden per class: Tonyo opens the shop, Nuno asks riddles, the Tikbalang starts the timer, a bush starts a search. |
 | Exception handling | `AssetLoader` catches missing images and uses a placeholder; `Player.useItem()` rejects items not in the inventory; `InsufficientCoinsException` for the shop. |
 | Arrays and collections | `TileMap` copies the Tiled `solid` layer into a `boolean[][]` for collision; arrays hold the Stage 1 color pattern and the Stage 3 clue; `ArrayList` for coins, inventory, shop stock, bushes, torches, the Wakwak swarm and the collected clue pieces. |
 
 ## Testing
 
-`./gradlew test` (from `src/`) runs 48 JUnit 5 tests covering:
+`./gradlew test` (from `src/`) runs 52 JUnit 5 tests covering:
 
 - player movement, collision and stats;
 - the stage timer (including the paused Stage 3 clock);
@@ -140,7 +140,7 @@ A stage may add its own named markers and object layers. Stage 2 (`palengke.tmx`
 - bush searching with and without weapons, and the Tikbalang starting the timer;
 - the dialogue box (typing, paging, questions that do not pause) and fading notices;
 - Wakwak Cave torches (5 s burn, 10 s relight, light radius), the swarm's slowdown and retreat, the Rosary, and the cave map contract;
-- the Agimat timer and Sanity shield, riddles, cutscenes and the potion duel (including a duel Dayo can lose).
+- the Agimat timer and Sanity shield, riddles and the Nuno's reset, Stage 4's fear vision, cutscenes and the potion duel (including a duel Dayo can lose).
 
 Every stage was also smoke-run from the intro to the duel before release.
 

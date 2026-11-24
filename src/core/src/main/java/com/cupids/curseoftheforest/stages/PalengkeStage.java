@@ -24,6 +24,9 @@ import com.cupids.curseoftheforest.minigames.InsufficientCoinsException;
 import com.cupids.curseoftheforest.minigames.Shop;
 import com.cupids.curseoftheforest.player.Player;
 import com.cupids.curseoftheforest.screens.DialogueBox;
+import com.cupids.curseoftheforest.screens.Hud;
+import com.cupids.curseoftheforest.screens.KeyPrompt;
+import com.cupids.curseoftheforest.screens.UiSkin;
 import com.cupids.curseoftheforest.screens.Theme;
 import java.util.ArrayList;
 import java.util.List;
@@ -376,31 +379,92 @@ public class PalengkeStage extends GameStage {
         return glow;
     }
 
+    /** Short card text for each item (mockup 08); anything else uses the item's own description. */
+    private static final java.util.Map<String, String> CARD_TEXT = java.util.Map.of(
+            Shop.ITAK, "Search bushes 2x faster.",
+            Shop.PUNYAL, "Search bushes 1.5x faster.",
+            Shop.AGIMAT, "Doubles Stage 3 time.",
+            Shop.MALUNGGAY_JUICE, "+25 Courage when used.",
+            Shop.KWERDAS, "Serenade bonus.");
+
+    /** Tonyo's stall: a header, five item cards and the key help (layout from mockup 08). */
     private void drawShop() {
-        ScreenUtils.clear(0.09f, 0.16f, 0.12f, 1f);
+        ScreenUtils.clear(Theme.NIGHT);
         SpriteBatch batch = game.getBatch();
-        BitmapFont font = game.getFont();
-        float left = 48f;
-        float top = ForestGame.WORLD_HEIGHT - 48f;
+        float top = ForestGame.WORLD_HEIGHT;
         batch.setProjectionMatrix(shopProjection);
         batch.begin();
-        font.draw(batch, tonyo.getName() + "'s Shop", left, top);
-        font.draw(batch, "Dayo's coins: " + player.getCoins()
-                + "   Courage: " + player.getCourage(), left, top - 32);
-        {
-            font.draw(batch, "Tonyo: \"Ha! You came back with all your fingers. Let's see those coins.\"", left, top - 72);
-            font.draw(batch, "Press 1-5 to buy an item. Press Enter to continue to Stage 3.", left, top - 100);
-            List<Item> stock = tonyo.getShop().listStock();
-            for (int i = 0; i < stock.size(); i++) {
-                Item item = stock.get(i);
-                String price = player.getInventory().has(item) ? "Bought" : item.getPrice() + " coins";
-                font.draw(batch, (i + 1) + "   " + item.getName() + "   " + price, left, top - 140 - i * 30);
-            }
-            font.draw(batch, "U: Drink Malunggay Juice (+25 Courage). Save it for +2 minutes in Stage 4.",
-                    left, top - 300);
-            font.draw(batch, shopMessage, left, top - 332);
+        Texture backdrop = Theme.loadBackdrop(game.getAssetLoader(), "images/backgrounds/shop.png");
+        Theme.drawBackdrop(batch, backdrop);
+
+        UiSkin.frame(batch, UiSkin.Frame.PANEL, 16, top - 84, 928, 68);
+        UiSkin.frame(batch, UiSkin.Frame.SLOT, 26, top - 78, 56, 56);
+        if (tonyoPortrait != null) {
+            batch.draw(tonyoPortrait, 30, top - 74, 48, 48);
+        }
+        Theme.text(batch, Theme.Size.HEADING, tonyo.getName() + "'s Stall", 104, top - 22, Theme.GOLD);
+        Theme.text(batch, Theme.Size.SMALL, "\"Coins first, Dayo. Choose well, you cannot buy it all!\"", 104, top - 60, Theme.PAPER);
+        UiSkin.image(batch, "icon-coin", 792, top - 48);
+        Theme.text(batch, Theme.Size.SMALL, "Coins", 822, top - 30, Theme.PAPER);
+        Theme.textRight(batch, Theme.Size.HEADING, String.valueOf(player.getCoins()), 924, top - 44, Theme.GOLD);
+
+        List<Item> stock = tonyo.getShop().listStock();
+        float cardW = 164;
+        float gap = (ForestGame.WORLD_WIDTH - 32 - stock.size() * cardW) / Math.max(1, stock.size() - 1);
+        for (int i = 0; i < stock.size(); i++) {
+            drawCard(batch, stock.get(i), i + 1, 16 + i * (cardW + gap), top - 382, cardW, 270);
+        }
+
+        UiSkin.frame(batch, UiSkin.Frame.TOAST, 162, top - 442, 636, 32);
+        Theme.textCentred(batch, Theme.Size.BODY, "[1-5] Buy    [U] Drink juice    [ENTER] Continue to Stage 3", 480, top - 418, Theme.PAPER);
+        if (!shopMessage.isEmpty()) {
+            UiSkin.frame(batch, UiSkin.Frame.TOAST, 162, top - 490, 636, 32);
+            Theme.textCentred(batch, Theme.Size.BODY, shopMessage, 480, top - 466, Theme.GOLD);
         }
         batch.end();
+    }
+
+    /** One item card: number tag, icon box, name, what it does, and its price or "OWNED". */
+    private void drawCard(SpriteBatch batch, Item item, int number, float x, float y, float w, float h) {
+        boolean owned = player.getInventory().has(item);
+        boolean affordable = player.getCoins() >= item.getPrice();
+        float centre = x + w / 2;
+        batch.setColor(1f, 1f, 1f, owned ? 0.6f : 1f);
+        UiSkin.frame(batch, UiSkin.Frame.PANEL, x, y, w, h);
+        UiSkin.frame(batch, UiSkin.Frame.SLOT, x + 18, y + h - 128, w - 36, 104);
+        String iconPath = Hud.iconPath(item.getName());
+        if (iconPath != null) {
+            Texture icon = game.getAssetLoader().loadImage(iconPath);
+            batch.draw(icon, centre - 40, y + h - 116, 80, 80);
+        }
+        batch.setColor(Color.WHITE);
+        KeyPrompt.keyCap(batch, String.valueOf(number), x + 8, y + h - 36);
+
+        // Long names drop to the small font so they stay inside the card.
+        Theme.Size nameSize = Theme.width(Theme.font(Theme.Size.BODY), item.getName()) <= w - 16 ? Theme.Size.BODY : Theme.Size.SMALL;
+        Theme.textCentred(batch, nameSize, item.getName(), centre, y + h - 144, owned ? Theme.DIM : Theme.PAPER);
+        BitmapFont small = Theme.font(Theme.Size.SMALL);
+        small.setColor(owned ? Theme.DIM : Theme.MUTED);
+        small.draw(batch, CARD_TEXT.getOrDefault(item.getName(), item.getDescription()), x + 10, y + h - 170, w - 20,
+                com.badlogic.gdx.utils.Align.center, true);
+        if (owned) {
+            Theme.textCentred(batch, Theme.Size.TALK, "OWNED", centre, y + 52, Theme.SUCCESS);
+        } else if (affordable) {
+            drawPrice(batch, item.getPrice(), centre, y + 52, Theme.GOLD);
+        } else {
+            // Too dear right now: the price sits in a red box with the reason under it.
+            UiSkin.frame(batch, UiSkin.Frame.TOAST_WARNING, x + 10, y + 8, w - 20, 60);
+            drawPrice(batch, item.getPrice(), centre, y + 58, Theme.WARNING);
+            Theme.textCentred(batch, Theme.Size.SMALL, "Not enough coins", centre, y + 30, Theme.WARNING);
+        }
+    }
+
+    private static void drawPrice(SpriteBatch batch, int price, float centre, float top, Color color) {
+        String text = String.valueOf(price);
+        float width = 28 + Theme.width(Theme.font(Theme.Size.TALK), text);
+        float left = Math.round(centre - width / 2);
+        UiSkin.image(batch, "icon-coin", left, top - 21);
+        Theme.text(batch, Theme.Size.TALK, text, left + 28, top, color);
     }
 
     @Override

@@ -189,7 +189,7 @@ public class ForestGame extends Game {
         return font;
     }
 
-    /** The big pixel font for headings (game title, "Game Over"). */
+    /** The heading font (28 px); Theme owns it and frees it with the others. */
     public BitmapFont getTitleFont() {
         return titleFont;
     }
@@ -204,8 +204,6 @@ public class ForestGame extends Game {
         disposeIntro();
         disposeCurrentStage();
         batch.dispose();
-        font.dispose();
-        titleFont.dispose();
         Theme.dispose();
         assetLoader.dispose();
     }

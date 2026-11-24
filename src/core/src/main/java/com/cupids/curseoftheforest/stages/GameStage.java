@@ -362,8 +362,8 @@ public abstract class GameStage extends ScreenAdapter {
             camera.project(promptSpot, 0, 0, ForestGame.WORLD_WIDTH, ForestGame.WORLD_HEIGHT);
             KeyPrompt.draw(batch, font, promptKey, promptAction, promptSpot.x, promptSpot.y + 6);
         }
-        // Under the HUD bar, or just above the item bar while the talking box is up.
-        toast.render(batch, font, dialogue.isOpen() ? 130f : 468f);
+        // Under the HUD bar, or under the talking box while it is up (UI spec: y 70 or 232 from the top).
+        toast.render(batch, font, dialogue.isOpen() ? dialogue.bottomY() - 12 : ForestGame.WORLD_HEIGHT - 70);
         dialogue.render(batch, font);
         batch.end();
     }
@@ -403,6 +403,15 @@ public abstract class GameStage extends ScreenAdapter {
                 || player.getCourage() <= 0
                 || player.getSanity() <= 0
                 || (timer != null && timer.isExpired());
+    }
+
+    /** One sentence for the game-over screen saying why the stage was lost. */
+    public String failureReason() {
+        if (player.getCourage() <= 0) return "Dayo's Courage ran out.";
+        if (player.getSanity() <= 0) return "Dayo's mind gave way.";
+        if (timer != null && timer.isExpired()) return "Time ran out.";
+        if (player.getY() < FALL_LIMIT) return "Dayo fell into the dark.";
+        return "Dayo was beaten.";
     }
 
     /** True when Dayo touches the map's exit marker. Platform stages use this as their goal. */

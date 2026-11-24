@@ -42,4 +42,14 @@ class StageDrainTest {
         assertEquals(100, stage.player.getCourage());
         assertEquals(100, stage.player.getSanity());
     }
+
+    @Test
+    void gameOverSaysWhyTheStageWasLost() {
+        GameStage stage = stageDraining(0f, 0f);
+        assertEquals("Dayo was beaten.", stage.failureReason());
+        stage.player.changeSanity(-100);
+        assertEquals("Dayo's mind gave way.", stage.failureReason());
+        stage.player.changeCourage(-100);
+        assertEquals("Dayo's Courage ran out.", stage.failureReason());
+    }
 }

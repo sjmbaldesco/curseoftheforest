@@ -6,13 +6,14 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import java.util.EnumMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
 /**
- * Shared look for menus, HUD and cutscenes: one palette, two fonts (VCR OSD Mono for reading,
- * Pixelify Sans for titles), and flat-colour panels.
- * The palette comes from Lola Pacita's speech bubble (cream paper, dark green ink).
+ * Shared look for menus, HUD and cutscenes: the UI spec's palette (design/ui-revamp/UI-SPEC.md)
+ * and VCR OSD Mono at five sizes. The wooden frames themselves are drawn by {@link UiSkin}.
  */
 public final class Theme {
     public static final Color NIGHT = Color.valueOf("0B1A12");
@@ -25,42 +26,78 @@ public final class Theme {
     public static final Color WARNING = Color.valueOf("FF8A6B");
     public static final Color SHADE = new Color(0f, 0f, 0f, 0.55f);
 
-    /** Body text. Its atlas is rendered at 2x (tools/make_bitmap_font.py) so it stays sharp full screen. */
-    private static final String FONT_PATH = "fonts/vcr.fnt";
-    private static final float BODY_FONT_SCALE = 0.5f;
-    /** Titles: the chunky pixel font, drawn large. */
-    private static final String TITLE_FONT_PATH = "fonts/pixelify.fnt";
+    /** Secondary text (descriptions) and dimmed text (owned items), from the UI spec. */
+    public static final Color MUTED = Color.valueOf("B9C7BD");
+    public static final Color DIM = Color.valueOf("7E8F84");
+    /** Owned / success, and the selected-button text. */
+    public static final Color SUCCESS = Color.valueOf("52B07C");
+    public static final Color GOLD_LIGHT = Color.valueOf("F7D977");
+    /** Fill inside the wooden frames. */
+    public static final Color PANEL = Color.valueOf("14241B");
+
+    /**
+     * The text sizes in the UI spec, in window pixels. Each is its own VCR OSD Mono bitmap font
+     * (tools/make_bitmap_font.py) drawn at scale 1, with hard pixel edges.
+     */
+    public enum Size {
+        /** Hints and descriptions. */
+        SMALL(14),
+        /** HUD and labels; the game's default font. */
+        BODY(16),
+        /** Dialogue and buttons (30 px between lines). */
+        TALK(20),
+        /** Titles. */
+        HEADING(28),
+        /** "Game Over" and "The End". */
+        HUGE(56);
+
+        public final int pixels;
+
+        Size(int pixels) {
+            this.pixels = pixels;
+        }
+
+        String path() {
+            return "fonts/vcr-" + pixels + ".fnt";
+        }
+    }
+
+    private static final Map<Size, BitmapFont> FONTS = new EnumMap<>(Size.class);
     /** Each loaded font's normal scale, so {@link #setScale} can scale relative to it. */
     private static final Map<BitmapFont, Float> BASE_SCALES = new IdentityHashMap<>();
+    private static final GlyphLayout LAYOUT = new GlyphLayout();
     private static Texture pixel;
 
     private Theme() {
     }
 
-    /** The body font (VCR OSD Mono), about 16 px tall in the 960 by 540 window. */
-    public static BitmapFont loadFont() {
-        return load(FONT_PATH, BODY_FONT_SCALE, Texture.TextureFilter.Linear, false);
+    /** The font for a size, loaded the first time it is asked for. */
+    public static BitmapFont font(Size size) {
+        return FONTS.computeIfAbsent(size, s -> load(s.path()));
     }
 
-    /** The title font (Pixelify Sans), for big headings such as the game's name and "Game Over". */
+    /** The body font (16 px). */
+    public static BitmapFont loadFont() {
+        return font(Size.BODY);
+    }
+
+    /** The heading font (28 px). */
     public static BitmapFont loadTitleFont() {
-        return load(TITLE_FONT_PATH, 1f, Texture.TextureFilter.Nearest, true);
+        return font(Size.HEADING);
     }
 
     /** Falls back to LibGDX's default font if the file is missing, so the game never crashes. */
-    private static BitmapFont load(String path, float scale, Texture.TextureFilter filter, boolean integerPositions) {
+    private static BitmapFont load(String path) {
         BitmapFont font;
         try {
             font = new BitmapFont(Gdx.files.internal(path));
-            font.getRegion().getTexture().setFilter(filter, filter);
-            font.getData().setScale(scale);
+            font.getRegion().getTexture().setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         } catch (RuntimeException e) {
             Gdx.app.error("Theme", "Font missing, using default: " + e.getMessage());
             font = new BitmapFont();
-            scale = 1f;
         }
-        font.setUseIntegerPositions(integerPositions);
-        BASE_SCALES.put(font, scale);
+        font.setUseIntegerPositions(true);
+        BASE_SCALES.put(font, 1f);
         return font;
     }
 
@@ -72,6 +109,50 @@ public final class Theme {
     public static void setScale(BitmapFont font, float scaleX, float scaleY) {
         float base = BASE_SCALES.getOrDefault(font, 1f);
         font.getData().setScale(scaleX * base, scaleY * base);
+    }
+
+    /** How wide a line of text is in a font, in window pixels. */
+    public static float width(BitmapFont font, String text) {
+        LAYOUT.setText(font, text);
+        return LAYOUT.width;
+    }
+
+    /**
+     * Draws text with the spec's 2 px night shadow down and to the right; (x, y) is the top-left
+     * of the text. The batch must be started.
+     */
+    public static void text(SpriteBatch batch, Size size, String text, float x, float y, Color color) {
+        BitmapFont font = font(size);
+        font.setColor(NIGHT);
+        font.draw(batch, text, x + 2, y - 2);
+        font.setColor(color);
+        font.draw(batch, text, x, y);
+    }
+
+    /** Like {@link #text} but centred on {@code centreX}. */
+    public static void textCentred(SpriteBatch batch, Size size, String text, float centreX, float y, Color color) {
+        text(batch, size, text, Math.round(centreX - width(font(size), text) / 2), y, color);
+    }
+
+    /** Like {@link #text} but with its right edge at {@code rightX}. */
+    public static void textRight(SpriteBatch batch, Size size, String text, float rightX, float y, Color color) {
+        text(batch, size, text, Math.round(rightX - width(font(size), text)), y, color);
+    }
+
+    /** Title text with the spec's 2 px night outline all round. */
+    public static void title(SpriteBatch batch, Size size, String text, float centreX, float y, Color color) {
+        BitmapFont font = font(size);
+        float x = Math.round(centreX - width(font, text) / 2);
+        font.setColor(NIGHT);
+        for (int dx = -2; dx <= 2; dx += 2) {
+            for (int dy = -2; dy <= 2; dy += 2) {
+                if (dx != 0 || dy != 0) {
+                    font.draw(batch, text, x + dx, y + dy);
+                }
+            }
+        }
+        font.setColor(color);
+        font.draw(batch, text, x, y);
     }
 
     /** Draws a solid rectangle; the batch must already be started. */
@@ -115,6 +196,12 @@ public final class Theme {
     }
 
     public static void dispose() {
+        for (BitmapFont font : FONTS.values()) {
+            BASE_SCALES.remove(font);
+            font.dispose();
+        }
+        FONTS.clear();
+        UiSkin.dispose();
         if (pixel != null) {
             pixel.dispose();
             pixel = null;

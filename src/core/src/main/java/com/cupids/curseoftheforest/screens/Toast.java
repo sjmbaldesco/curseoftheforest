@@ -2,22 +2,22 @@ package com.cupids.curseoftheforest.screens;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.cupids.curseoftheforest.ForestGame;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 /**
- * Short notices ("+1 coin", "Wrong offering") that appear under the HUD and fade away on their
- * own, so the player is told what happened without a panel covering the level.
+ * Short notices ("+1 coin", "Wrong offering") that appear at the right under the HUD (or under the
+ * talk box) and fade away on their own, so the player is told what happened without a panel
+ * covering the level. Losses use the red warning frame.
  */
 public class Toast {
-    /** Seconds a notice stays on screen, including its fade. */
-    static final float SHOW_SECONDS = 2.6f;
-    private static final float FADE_SECONDS = 0.6f;
+    /** Fade in 0.2 s, hold 2 s, fade out 0.5 s (UI spec). */
+    private static final float FADE_IN_SECONDS = 0.2f;
+    private static final float FADE_SECONDS = 0.5f;
+    /** Seconds a notice stays on screen, including its fades. */
+    static final float SHOW_SECONDS = FADE_IN_SECONDS + 2f + FADE_SECONDS;
     private static final int MAX_SHOWN = 3;
-    private static final GlyphLayout LAYOUT = new GlyphLayout();
 
     private final Deque<Notice> notices = new ArrayDeque<>();
 
@@ -75,21 +75,29 @@ public class Toast {
         notices.clear();
     }
 
-    /** Draws the notices stacked from {@code topY} downward, centred. The batch must be started. */
+    /** How visible a notice is at an age: fades in, holds, fades out. */
+    static float alpha(float age) {
+        return Math.max(0f, Math.min(1f, Math.min(age / FADE_IN_SECONDS, (SHOW_SECONDS - age) / FADE_SECONDS)));
+    }
+
+    /**
+     * Draws the notices right-aligned to x = 944, stacked downward from {@code topY} (window y of
+     * the first notice's top edge). The batch must be started.
+     */
     public void render(SpriteBatch batch, BitmapFont font, float topY) {
-        Color previous = new Color(font.getColor());
         float y = topY;
         for (Notice notice : notices) {
-            float alpha = Math.min(1f, (SHOW_SECONDS - notice.age) / FADE_SECONDS);
-            LAYOUT.setText(font, notice.text);
-            float width = LAYOUT.width + 28;
-            float x = (ForestGame.WORLD_WIDTH - width) / 2;
-            Theme.rect(batch, new Color(0f, 0f, 0f, 0.6f * alpha), x, y - 30, width, 30);
-            Color ink = notice.warning ? Theme.WARNING : Theme.PAPER;
-            font.setColor(ink.r, ink.g, ink.b, alpha);
-            font.draw(batch, notice.text, x + 14, y - 8);
-            y -= 34;
+            float alpha = alpha(notice.age);
+            float width = Math.round((Theme.width(Theme.font(Theme.Size.BODY), notice.text) + 28) / 2) * 2;
+            float x = 944 - width;
+            batch.setColor(1f, 1f, 1f, alpha);
+            UiSkin.frame(batch, notice.warning ? UiSkin.Frame.TOAST_WARNING : UiSkin.Frame.TOAST, x, y - 32, width, 32);
+            batch.setColor(Color.WHITE);
+            Color ink = notice.warning ? Theme.WARNING : Theme.GOLD;
+            BitmapFont body = Theme.font(Theme.Size.BODY);
+            body.setColor(ink.r, ink.g, ink.b, alpha);
+            body.draw(batch, notice.text, x + 14, y - 8);
+            y -= 40;
         }
-        font.setColor(previous);
     }
 }

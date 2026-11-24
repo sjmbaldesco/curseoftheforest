@@ -156,7 +156,7 @@ public class TulayStage extends GameStage {
         homeBackground = getParallax();
         if (visionMap == null) visionMap = new TileMap();
         visionMap.load(place.mapPath);
-        showScenery(visionMap, ParallaxBackground.forStage(game.getAssetLoader(), place.stagePrefix));
+        showScenery(visionMap, new ParallaxBackground(game.getAssetLoader(), place.backdrop));
         Rectangle arrival = place.arrivalMarker == null ? null : visionMap.getMarker(place.arrivalMarker);
         if (arrival != null) {
             player.setPosition(arrival.x + 128, arrival.y); // just inside, e.g. past the cave mouth
@@ -208,6 +208,14 @@ public class TulayStage extends GameStage {
     @Override
     protected float courageDrainPerSecond() {
         return riddleIsUp() ? RIDDLE_COURAGE_DRAIN : 0f;
+    }
+
+    @Override
+    protected boolean growsFoliageAt(float worldX) {
+        // In the cave vision the rock floor past the cave mouth stays bare, as in Stage 2.
+        Hallucination.Place place = vision.getPlace();
+        Rectangle mouth = place == null || place.arrivalMarker == null ? null : tileMap.getMarker(place.arrivalMarker);
+        return mouth == null || worldX + 32 < mouth.x;
     }
 
     @Override

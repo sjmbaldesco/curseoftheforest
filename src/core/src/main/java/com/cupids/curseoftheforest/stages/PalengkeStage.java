@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
@@ -60,6 +61,9 @@ public class PalengkeStage extends GameStage {
     private String shopMessage;
     private Texture glow;
     private float flicker;
+    /** Burning-torch frames and the dead torch; null keeps the torch drawn in code. */
+    private Animation<TextureRegion> torchLit;
+    private TextureRegion torchUnlit;
 
     public PalengkeStage(ForestGame game) {
         super(game, "Stage 2: Ang Palengke ng Duwende", "maps/palengke.tmx");
@@ -84,6 +88,13 @@ public class PalengkeStage extends GameStage {
         tonyo.setSpriteSheet(tonyoSheet, 5);
         tonyoPortrait = DialogueBox.portraitFrom(tonyoSheet, 5);
         caveMouth = tileMap.getMarker("cave");
+        if (caveMouth != null && getParallax() != null) {
+            // Past the cave mouth the forest backdrop gives way to rock walls and stalactites.
+            getParallax().switchAt(caveMouth.x, new ParallaxBackground(game.getAssetLoader(), "stage2-wakwak-cave"));
+        }
+        torchLit = game.getAssetLoader().loadStrip("images/animated/torch_lit.png", 32, 0.08f);
+        Animation<TextureRegion> unlit = game.getAssetLoader().loadStrip("images/animated/torch_unlit.png", 32, 1f);
+        torchUnlit = unlit == null ? null : unlit.getKeyFrame(0);
 
         Texture wakwakSheet = game.getAssetLoader().loadImage("images/wakwak.png");
         swarm.clear();
@@ -285,7 +296,9 @@ public class PalengkeStage extends GameStage {
             if (torch.isLit()) {
                 // Two out-of-step waves make the flame flicker unevenly, like a real fire.
                 float r = Torch.LIGHT_RADIUS * (0.93f + 0.04f * MathUtils.sin(flicker * 13f) + 0.03f * MathUtils.sin(flicker * 31f + torch.getCentreX()));
-                drawGlow(batch, TORCH_GLOW, torch.getCentreX(), torch.getCentreY(), r);
+                // The glow sits on the sprite's flame, near the top of its 64 px post.
+                float glowY = torchLit != null ? torch.getBounds().y + 50 : torch.getCentreY();
+                drawGlow(batch, TORCH_GLOW, torch.getCentreX(), glowY, r);
             }
         }
         if (player.getX() > caveMouth.x - 64) {
@@ -307,10 +320,25 @@ public class PalengkeStage extends GameStage {
         batch.setColor(previous);
     }
 
+    @Override
+    protected boolean growsFoliageAt(float worldX) {
+        return caveMouth == null || worldX + 32 < caveMouth.x;
+    }
+
     /** A wooden post with a flame on top; a dim ember and a refill bar while it cools down. */
     private void drawTorch(SpriteBatch batch, Torch torch) {
         Rectangle b = torch.getBounds();
         float cx = b.x + b.width / 2;
+        if (torchLit != null && torchUnlit != null) {
+            // The 32 by 64 sprite stands on the torch's spot; each torch flickers out of step.
+            TextureRegion frame = torch.isLit() ? torchLit.getKeyFrame(flicker + b.x * 0.01f) : torchUnlit;
+            batch.draw(frame, cx - 16, b.y, 32, 64);
+            if (!torch.isLit() && !torch.isReady()) {
+                Theme.rect(batch, Theme.INK, cx - 9, b.y - 6, 18, 3);
+                Theme.rect(batch, Theme.GOLD, cx - 9, b.y - 6, 18 * torch.getRelightProgress(), 3);
+            }
+            return;
+        }
         Theme.rect(batch, Theme.INK, cx - 3, b.y, 6, b.height - 6);
         Theme.rect(batch, Color.valueOf("6B4A2B"), cx - 2, b.y, 4, b.height - 7);
         Theme.rect(batch, Theme.INK, cx - 5, b.y + b.height - 9, 10, 5);

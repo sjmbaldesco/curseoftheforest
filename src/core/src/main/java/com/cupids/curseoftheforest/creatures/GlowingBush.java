@@ -1,7 +1,9 @@
 package com.cupids.curseoftheforest.creatures;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.cupids.curseoftheforest.items.Weapon;
 import com.cupids.curseoftheforest.player.Player;
@@ -29,6 +31,11 @@ public class GlowingBush implements Interactable {
 
     private Texture sprite;
     private Texture searchedSprite;
+    /** Animated art: the glowing bush swaying, the bush shaking while searched, the emptied bush. */
+    private Animation<TextureRegion> idleFrames;
+    private TextureRegion searchingFrame;
+    private TextureRegion searchedFrame;
+    private float animationTime;
 
     /**
      * @param piece the clue word hidden here, or null if the bush hides none
@@ -68,6 +75,9 @@ public class GlowingBush implements Interactable {
 
     /** Advances an ongoing search. When it finishes, Dayo receives the bush's coins. */
     public void update(float delta) {
+        if (delta > 0) {
+            animationTime = (animationTime + delta) % 10_000f;
+        }
         if (!isSearching() || delta <= 0) {
             return;
         }
@@ -141,7 +151,28 @@ public class GlowingBush implements Interactable {
         this.searchedSprite = searchedSprite;
     }
 
+    /**
+     * Art hook for the animated Blender bush. Frames are drawn at their own size, standing on the
+     * bush's spot and centred on it. Any of them may be null; the idle frames are required to use this art.
+     */
+    public void setAnimatedSprites(Animation<TextureRegion> idle, TextureRegion searching, TextureRegion searched) {
+        this.idleFrames = idle;
+        this.searchingFrame = searching;
+        this.searchedFrame = searched;
+    }
+
     public void render(SpriteBatch batch) {
+        if (idleFrames != null) {
+            TextureRegion frame = idleFrames.getKeyFrame(animationTime + bounds.x * 0.01f);
+            if (searched && searchedFrame != null) {
+                frame = searchedFrame;
+            } else if (isSearching() && searchingFrame != null) {
+                frame = searchingFrame;
+            }
+            float w = frame.getRegionWidth();
+            batch.draw(frame, bounds.x + bounds.width / 2 - w / 2, bounds.y, w, frame.getRegionHeight());
+            return;
+        }
         Texture texture = searched && searchedSprite != null ? searchedSprite : sprite;
         if (texture != null) {
             batch.draw(texture, bounds.x, bounds.y, bounds.width, bounds.height);

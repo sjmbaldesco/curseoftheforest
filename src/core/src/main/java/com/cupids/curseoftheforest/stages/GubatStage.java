@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
@@ -42,6 +43,8 @@ public class GubatStage extends GameStage {
     static final float AGIMAT_SANITY_SHARE = 0.5f;
     private static final String BUSH_IMAGE = "images/glowing-bush.png";
     private static final String SEARCHED_BUSH_IMAGE = "images/glowing-bush-searched.png";
+    private static final String BUSH_IDLE_SHEET = "images/animated/bush_glowing_idle.png";
+    private static final String SEARCHING_BUSH_IMAGE = "images/glowing-bush-searching.png";
 
     private Tikbalang tikbalang;
     private final List<GlowingBush> bushes = new ArrayList<>();
@@ -80,13 +83,19 @@ public class GubatStage extends GameStage {
         tikbalangPortrait = DialogueBox.portraitFrom(tikbalangSheet, 5);
 
         hasBushSprite = Gdx.files.internal(BUSH_IMAGE).exists();
+        Animation<TextureRegion> bushIdle = game.getAssetLoader().loadStrip(BUSH_IDLE_SHEET, 64, 0.15f);
+        Texture searchingBush = optionalImage(SEARCHING_BUSH_IMAGE);
+        Texture searchedBush = optionalImage(SEARCHED_BUSH_IMAGE);
         bushes.clear();
         List<Rectangle> spots = tileMap.getObjects("bushes");
         for (int i = 0; i < spots.size(); i++) {
             String piece = pieceFor(i);
             GlowingBush bush = new GlowingBush(spots.get(i), piece,
                     piece == null ? COINS_PER_EMPTY_BUSH : 0, BUSH_SEARCH_SECONDS);
-            bush.setSprites(optionalImage(BUSH_IMAGE), optionalImage(SEARCHED_BUSH_IMAGE));
+            bush.setSprites(optionalImage(BUSH_IMAGE), searchedBush);
+            if (bushIdle != null) {
+                bush.setAnimatedSprites(bushIdle, region(searchingBush), region(searchedBush));
+            }
             bushes.add(bush);
         }
         pieces.clear();
@@ -103,6 +112,10 @@ public class GubatStage extends GameStage {
             }
         }
         return null;
+    }
+
+    private static TextureRegion region(Texture texture) {
+        return texture == null ? null : new TextureRegion(texture);
     }
 
     /** Art hook: uses an image only if the file exists, so a missing bush sprite is not magenta. */

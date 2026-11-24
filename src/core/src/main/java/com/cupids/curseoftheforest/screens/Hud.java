@@ -4,13 +4,17 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.Align;
 import com.cupids.curseoftheforest.AssetLoader;
 import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.player.Player;
 import com.cupids.curseoftheforest.items.Item;
+import com.cupids.curseoftheforest.items.Potion;
+import com.cupids.curseoftheforest.minigames.PotionType;
 import com.cupids.curseoftheforest.stages.StageTimer;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +25,12 @@ public class Hud {
     private final StageTimer timer;
     private final BitmapFont font;
     private final String stageName;
-    /** Item name to icon file; items without an icon (potions) are listed by name instead. */
+    /** Each potion kind's bubbling, glowing bottle (red for Damage, green for Heal, blue for Stun). */
+    private static final Map<PotionType, String> POTION_SHEETS = Map.of(
+            PotionType.DAMAGE, "images/animated/potion-red_glow.png",
+            PotionType.HEAL, "images/animated/potion-green_glow.png",
+            PotionType.STUN, "images/animated/potion-light-blue_glow.png");
+    /** Item name to icon file; items without an icon are listed by name instead. */
     private static final Map<String, String> ICON_FILES = Map.of(
             "Lumang Itak", "itak",
             "Lumang Punyal", "punyal",
@@ -38,6 +47,7 @@ public class Hud {
     private String goal = "";
     private AssetLoader icons;
     private final Map<String, Texture> iconCache = new HashMap<>();
+    private final Map<PotionType, Animation<TextureRegion>> potionCache = new HashMap<>();
     private final Matrix4 worldProjection = new Matrix4();
     private final Matrix4 screen = new Matrix4().setToOrtho2D(0, 0, ForestGame.WORLD_WIDTH, ForestGame.WORLD_HEIGHT);
 
@@ -51,6 +61,19 @@ public class Hud {
     /** Lets the HUD draw item icons; without it the item list stays text-only. */
     public void setIcons(AssetLoader loader) {
         this.icons = loader;
+    }
+
+    /** The icon to draw for an item now: a potion's current animation frame, or a still icon; null for none. */
+    private TextureRegion iconFrameFor(Item item) {
+        if (item instanceof Potion potion && icons != null) {
+            Animation<TextureRegion> bottle = potionCache.computeIfAbsent(potion.getType(),
+                    type -> icons.loadStrip(POTION_SHEETS.get(type), 64, 0.12f));
+            if (bottle != null) {
+                return bottle.getKeyFrame(pulseTime);
+            }
+        }
+        Texture icon = iconFor(item);
+        return icon == null ? null : new TextureRegion(icon);
     }
 
     private Texture iconFor(Item item) {
@@ -114,7 +137,7 @@ public class Hud {
                 names.append(" +").append(player.getInventory().getAll().size() - 8).append(" more");
                 break;
             }
-            Texture icon = iconFor(item);
+            TextureRegion icon = iconFrameFor(item);
             if (icon != null) {
                 batch.draw(icon, x, 4, 44, 44);
                 x += 52;

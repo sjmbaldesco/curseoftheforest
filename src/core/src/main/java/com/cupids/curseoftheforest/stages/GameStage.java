@@ -14,6 +14,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.cupids.curseoftheforest.AssetLoader;
 import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.player.Player;
 import com.cupids.curseoftheforest.screens.DialogueBox;
@@ -37,6 +38,8 @@ public abstract class GameStage extends ScreenAdapter {
     private static final float MAX_DELTA = 1 / 30f;
     /** How far below the map the player can fall before the stage counts as failed. */
     private static final float FALL_LIMIT = -64f;
+    /** The glowing Blender coin, then the older plain spin; the still coin if both are missing. */
+    private static final String COIN_GLOW_SHEET = "images/animated/coin_spin_glow.png";
     private static final String COIN_SHEET = "images/coin-sheet.png";
     /**
      * How much of the world the camera shows, compared with the window. At 0.5 the camera sees a
@@ -69,6 +72,9 @@ public abstract class GameStage extends ScreenAdapter {
     private ParallaxBackground parallax;
     /** Fireflies, leaves, mist and dust for this stage; null when it has none. */
     private Ambience ambience;
+    /** Swaying grass and ferns on the ground of the map they were grown for. */
+    private Foliage foliage;
+    private TileMap foliageMap;
     /** Fractions of a point drained so far; stats are whole numbers, so drain is banked. */
     private float courageDrainBank;
     private float sanityDrainBank;
@@ -136,6 +142,11 @@ public abstract class GameStage extends ScreenAdapter {
         parallax = background;
     }
 
+    /** False where no grass or ferns should grow (Stage 2's cave floor is bare rock). */
+    protected boolean growsFoliageAt(float worldX) {
+        return true;
+    }
+
     protected ParallaxBackground getParallax() {
         return parallax;
     }
@@ -167,17 +178,19 @@ public abstract class GameStage extends ScreenAdapter {
         player = game.getPlayer();
         checkpoint = player.saveCheckpoint();
         coinTexture = game.getAssetLoader().loadImage("images/coin.png");
-        if (Gdx.files.internal(COIN_SHEET).exists()) {
-            Texture sheet = game.getAssetLoader().loadImage(COIN_SHEET);
-            sheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-            coinSpin = new Animation<>(0.08f, TextureRegion.split(sheet, 32, 32)[0]);
-            coinSpin.setPlayMode(Animation.PlayMode.LOOP);
+        AssetLoader assets = game.getAssetLoader();
+        coinSpin = assets.loadStrip(COIN_GLOW_SHEET, 32, 0.08f);
+        if (coinSpin == null) {
+            coinSpin = assets.loadStrip(COIN_SHEET, 32, 0.08f);
         }
-        parallax = ParallaxBackground.forStage(game.getAssetLoader(), name);
+        parallax = ParallaxBackground.forStage(assets, name);
         Ambience.Settings ambient = Ambience.settingsFor(name);
         if (ambience == null && ambient != null) {
-            ambience = new Ambience(ambient, name.hashCode());
+            // A stage with a fog image does not need the mist drawn in code as well.
+            ambience = new Ambience(parallax != null && parallax.hasFog() ? ambient.withoutMist() : ambient, name.hashCode());
+            ambience.setSprites(assets.loadStrip(Ambience.FIREFLY_SHEET, 16, 0.1f), assets.loadStrip(ambient.leafSheet(), 16, 0.1f));
         }
+        foliage = null;
         setUp();
     }
 
@@ -306,6 +319,16 @@ public abstract class GameStage extends ScreenAdapter {
         coinTime += Gdx.graphics.getDeltaTime();
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
+        if (foliageMap != tileMap) {
+            // Grown on first draw (after the stage set up its markers) and again if the map changes.
+            foliageMap = tileMap;
+            AssetLoader assets = game.getAssetLoader();
+            foliage = new Foliage(tileMap, this::growsFoliageAt,
+                    assets.loadStrip(Foliage.GRASS_SHEET, 32, 0.15f), assets.loadStrip(Foliage.FERN_SHEET, 48, 0.18f));
+            foliage.setTint(Foliage.tintFor(name));
+        }
+        foliage.update(frameTime);
+        foliage.render(batch); // behind the coins, so a tuft never hides one
         for (Rectangle coin : coinsActive() ? tileMap.getCoinMarkers() : List.<Rectangle>of()) {
             if (coinSpin != null) {
                 // The coin art is 32 px but the map marks coins as 16 px; centre the sprite on the marker.

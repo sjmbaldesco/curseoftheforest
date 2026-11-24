@@ -5,6 +5,8 @@ import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 
@@ -37,6 +39,27 @@ public class AssetLoader implements Disposable {
             Gdx.app.error("AssetLoader", "Could not load " + path + ", using a placeholder.", e);
             return getMissingTexture();
         }
+    }
+
+    /**
+     * Loads a one-row sprite sheet (frames side by side, left to right) as a looping animation.
+     * Returns null if the file does not exist, so callers can keep their older art instead of
+     * showing the magenta placeholder. Frames are drawn with crisp (nearest) pixels.
+     *
+     * @param frameWidth   width of one frame in pixels; the frame height is the sheet's height
+     * @param frameSeconds how long each frame shows
+     */
+    public Animation<TextureRegion> loadStrip(String path, int frameWidth, float frameSeconds) {
+        if (frameWidth <= 0 || frameSeconds <= 0) throw new IllegalArgumentException("Frame width and time must be positive.");
+        if (path == null || !Gdx.files.internal(path).exists()) {
+            return null;
+        }
+        Texture sheet = loadImage(path);
+        sheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        TextureRegion[] frames = TextureRegion.split(sheet, frameWidth, sheet.getHeight())[0];
+        Animation<TextureRegion> animation = new Animation<>(frameSeconds, frames);
+        animation.setPlayMode(Animation.PlayMode.LOOP);
+        return animation;
     }
 
     private Texture getMissingTexture() {

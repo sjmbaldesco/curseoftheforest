@@ -4,7 +4,9 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.Disposable;
@@ -17,6 +19,10 @@ import java.util.Random;
  * Small moving details that make a stage feel alive: fireflies that drift and blink, leaves that
  * fall and sway, dust floating in the cave, and slow bands of mist. None of it touches the
  * gameplay; it is drawn over the background and slides with the camera so it feels part of the world.
+ *
+ * <p>Fireflies and leaves use the animated Blender sprites when the stage hands them over with
+ * {@link #setSprites}; without them (tests, or a missing file) they fall back to shapes drawn in code.
+ * Dust is always drawn in code.
  *
  * <p>Particles live in window coordinates (960 by 540) and wrap around the edges, so a stage of
  * any length needs only a few dozen. The motion is plain maths, testable without graphics; only
@@ -31,15 +37,32 @@ public class Ambience implements Disposable {
         /** Mist colour, or null for no mist. */
         final Color mist;
         final Color leafColor;
+        /** Which falling-leaf sprite the stage uses: "green", "brown" or "violet". */
+        final String leafSprite;
 
-        Settings(int fireflies, int leaves, int dust, Color mist, Color leafColor) {
+        Settings(int fireflies, int leaves, int dust, Color mist, Color leafColor, String leafSprite) {
             this.fireflies = fireflies;
             this.leaves = leaves;
             this.dust = dust;
             this.mist = mist;
             this.leafColor = leafColor;
+            this.leafSprite = leafSprite;
+        }
+
+        /** The same effects without the code-drawn mist (used when the stage has a fog image instead). */
+        public Settings withoutMist() {
+            return new Settings(fireflies, leaves, dust, null, leafColor, leafSprite);
+        }
+
+        /** The leaf sprite sheet for these settings, or null when the stage has no leaves. */
+        public String leafSheet() {
+            return leaves == 0 || leafSprite == null ? null : "images/animated/leaf_" + leafSprite + "_tumble.png";
         }
     }
+
+    public static final String FIREFLY_SHEET = "images/animated/firefly.png";
+    /** Sprite frames are 16 px; drawn twice as big so they sit on the same pixel grid as the world. */
+    private static final float SPRITE_SIZE = 32f;
 
     /** Particles slide this much slower than the ground, like a layer between near and the tiles. */
     static final float DEPTH = 0.8f;
@@ -67,6 +90,8 @@ public class Ambience implements Disposable {
     private Texture glow;
     private Texture pixel;
     private Texture mist;
+    private Animation<TextureRegion> fireflySprite;
+    private Animation<TextureRegion> leafSprite;
     private final Matrix4 screen = new Matrix4().setToOrtho2D(0, 0, ForestGame.WORLD_WIDTH, ForestGame.WORLD_HEIGHT);
     private final Color tint = new Color();
 
@@ -109,11 +134,11 @@ public class Ambience implements Disposable {
     public static Settings settingsFor(String stageName) {
         String prefix = stageName != null && stageName.length() >= 8 ? stageName.substring(0, 8) : "";
         return switch (prefix) {
-            case "Stage 1:" -> new Settings(10, 0, 0, null, null);
-            case "Stage 2:" -> new Settings(0, 0, 36, null, null);
-            case "Stage 3:" -> new Settings(22, 12, 0, new Color(0.55f, 0.75f, 0.6f, 0.16f), Color.valueOf("5E8C3A"));
-            case "Stage 4:" -> new Settings(16, 0, 0, new Color(0.6f, 0.7f, 0.9f, 0.14f), null);
-            case "Stage 5:" -> new Settings(5, 10, 0, new Color(0.55f, 0.35f, 0.7f, 0.2f), Color.valueOf("7A4E6E"));
+            case "Stage 1:" -> new Settings(10, 6, 0, null, Color.valueOf("8A5A2B"), "brown");
+            case "Stage 2:" -> new Settings(0, 0, 36, null, null, null);
+            case "Stage 3:" -> new Settings(22, 12, 0, new Color(0.55f, 0.75f, 0.6f, 0.16f), Color.valueOf("5E8C3A"), "green");
+            case "Stage 4:" -> new Settings(16, 0, 0, new Color(0.6f, 0.7f, 0.9f, 0.14f), null, null);
+            case "Stage 5:" -> new Settings(5, 10, 0, new Color(0.55f, 0.35f, 0.7f, 0.2f), Color.valueOf("7A4E6E"), "violet");
             default -> null;
         };
     }
@@ -146,6 +171,17 @@ public class Ambience implements Disposable {
             }
             p.x = wrap(p.x);
         }
+    }
+
+    /** Hands over the animated sprites; either may be null to keep the code-drawn shape. */
+    public void setSprites(Animation<TextureRegion> firefly, Animation<TextureRegion> leaf) {
+        this.fireflySprite = firefly;
+        this.leafSprite = leaf;
+    }
+
+    /** The frame a particle shows now: each one starts at its own point in the loop. */
+    private TextureRegion frameOf(Animation<TextureRegion> sprite, Particle p) {
+        return sprite.getKeyFrame(time + p.phase);
     }
 
     static float wrap(float x) {
@@ -195,6 +231,12 @@ public class Ambience implements Disposable {
         batch.setProjectionMatrix(screen);
         batch.begin();
         for (Particle p : leaves) {
+            if (leafSprite != null) {
+                // The sprite tumbles on its own; it only drifts here.
+                batch.setColor(1f, 1f, 1f, 0.9f);
+                batch.draw(frameOf(leafSprite, p), wrap(p.x - slide) - SPRITE_SIZE / 2, p.y - SPRITE_SIZE / 2, SPRITE_SIZE, SPRITE_SIZE);
+                continue;
+            }
             Color c = settings.leafColor != null ? settings.leafColor : Color.OLIVE;
             batch.setColor(c.r, c.g, c.b, 0.85f);
             float angle = time * p.spin + p.phase * 57f;
@@ -208,6 +250,12 @@ public class Ambience implements Disposable {
         for (Particle p : fireflies) {
             float bright = fireflyBrightness(p);
             float x = wrap(p.x - slide);
+            if (fireflySprite != null) {
+                // The sprite has its own glow and blink; the slow brightness wave keeps them out of step.
+                batch.setColor(1f, 1f, 1f, 0.55f + 0.45f * bright);
+                batch.draw(frameOf(fireflySprite, p), x - SPRITE_SIZE / 2, p.y - SPRITE_SIZE / 2, SPRITE_SIZE, SPRITE_SIZE);
+                continue;
+            }
             tint.set(FIREFLY.r, FIREFLY.g, FIREFLY.b, 0.75f * bright);
             batch.setColor(tint);
             batch.draw(glow, x - p.size, p.y - p.size, p.size * 2, p.size * 2);

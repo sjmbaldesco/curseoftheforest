@@ -22,25 +22,25 @@ public class Hallucination {
 
     /** The places Dayo can be sent back to, each with its map, art set and phantom creature. */
     public enum Place {
-        CAVE("maps/palengke.tmx", "cave", "Stage 2:", "images/wakwak.png", "Wakwak Cave", 0.45f),
-        FOREST("maps/gubat.tmx", null, "Stage 3:", "images/tikbalang.png", "Tikbalang's forest", 0.15f);
+        CAVE("maps/palengke.tmx", "cave", "stage2-wakwak-cave", "images/wakwak.png", "Wakwak Cave", 0.45f),
+        FOREST("maps/gubat.tmx", null, "stage3-gubat", "images/tikbalang.png", "Tikbalang's forest", 0.15f);
 
         public final String mapPath;
         /** The map marker Dayo appears just past, or null for the map's own spawn. */
         public final String arrivalMarker;
-        /** The "Stage N:" prefix that picks the parallax art. */
-        public final String stagePrefix;
+        /** The parallax art set shown during the vision (a folder name under images/parallax-v2). */
+        public final String backdrop;
         public final String phantomImage;
         public final String label;
         /** Extra black over the place at the vision's strongest: the cave is darker than the forest. */
         public final float darkness;
 
-        Place(String mapPath, String arrivalMarker, String stagePrefix, String phantomImage, String label,
+        Place(String mapPath, String arrivalMarker, String backdrop, String phantomImage, String label,
                 float darkness) {
             this.darkness = darkness;
             this.mapPath = mapPath;
             this.arrivalMarker = arrivalMarker;
-            this.stagePrefix = stagePrefix;
+            this.backdrop = backdrop;
             this.phantomImage = phantomImage;
             this.label = label;
         }

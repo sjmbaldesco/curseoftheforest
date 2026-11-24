@@ -30,9 +30,9 @@ Filipino students and casual players interested in Philippine folklore and cultu
 - Lola Pacita's gifts (Rosary, Lumang Gitara) and Duwende Tonyo's shop with an inventory. The cave holds at most 10 coins, so Dayo must choose what to buy.
 - One mini-game per stage:
   1. **Ang Simula:** repeat Lola Pacita's color sequence.
-  2. **Ang Palengke ng Duwende:** collect coins while the Wakwak chases you, then shop.
+  2. **Ang Palengke ng Duwende (Test of Courage):** cross the forest edge, meet Duwende Tonyo, then spend 3 minutes in the Wakwak Cave grabbing coins while a swarm hunts you. Torches burn for 5 s when touched (10 s to relight) and slow any Wakwak in their light. Spend the coins at Tonyo's shop.
   3. **Ang Gubat ng Tikbalang:** talk to the Tikbalang to start the clock, then hold E at glowing bushes to find the three pieces of the clue *"Baliktarin ang damit"* and escape.
-  4. **Tulay ng Nuno sa Punso:** offer the right food for three riddles to earn three potions.
+  4. **Tulay ng Nuno sa Punso:** offer the right food for three riddles to earn three potions. Courage drains while a riddle is up and a wrong offering costs 10 more. At 0 Courage Dayo is not beaten: he falls into an 8-second vision of the Wakwak Cave or the Tikbalang forest, then wakes by the Nuno with 50 Courage, the potions taken back and the riddles starting over.
   5. **Ang Tukso ng Mangkukulam:** potion duel. Stun beats Damage, Damage beats Heal, Heal beats Stun. The witch hides her pick.
 - Item effects that change later stages:
   - The Agimat gives 3 minutes instead of 1.5 in Stage 3, and halves the forest's Sanity drain.
@@ -49,6 +49,7 @@ Filipino students and casual players interested in Philippine folklore and cultu
 - Tiled map editor for levels (`.tmx`)
 - Gradle 8.14 (wrapper included)
 - JUnit 5 for unit tests
+- Font: VCR OSD Mono by Riciery Leal (DaFont, "100% Free"), turned into crisp bitmap fonts at 14, 16, 20, 28 and 56 px by `tools/make_bitmap_font.py`. See `CREDITS.md`.
 
 ## How to run
 
@@ -63,7 +64,7 @@ Other commands (run from `src/`):
 
 ```bash
 ./gradlew test              # unit tests
-./gradlew lwjgl3:jar        # runnable jar in lwjgl3/build/libs/
+./gradlew lwjgl3:jar        # runnable jar in lwjgl3/build/libs/ (add --fullscreen when running it to start full screen)
 ```
 
 To open in IntelliJ IDEA: File > Open and select the `src` folder (the one with `settings.gradle`).
@@ -79,6 +80,7 @@ Controls:
 | 1-5 | Buy in the shop; U drinks the Malunggay Juice |
 | Enter/Space | Advance a cutscene |
 | Esc | Main menu |
+| F11 or Alt+Enter | Borderless full screen on/off (the window can also be resized; the game keeps its shape with black bars) |
 
 On the game-over screen, **R** retries the stage and **M** returns to the menu.
 
@@ -91,12 +93,14 @@ curseoftheforest/
 │   │   ├── ForestGame, AssetLoader
 │   │   ├── player/          Player, Inventory
 │   │   ├── stages/          GameStage + 5 stages, StageTimer, TileMap, Checkpoint
-│   │   ├── screens/         MainMenuScreen, GameOverScreen, CutScene, Hud
+│   │   ├── screens/         MainMenuScreen, GameOverScreen, CutScene, Hud, UiSkin (wooden UI frames)
 │   │   ├── items/           Item, Weapon, Consumable, Accessory, Potion
 │   │   ├── creatures/       Interactable, Creature + 6 creatures, GlowingBush
 │   │   └── minigames/       Shop, InsufficientCoinsException, Riddle, PotionDuel, PotionType
 │   ├── lwjgl3/              desktop launcher (Main)
-│   └── assets/              maps/ (Tiled), images/
+│   └── assets/              maps/ (Tiled), images/ (ui/ holds the UI pieces; animated/ and parallax-v2/ the Blender sprites), fonts/
+├── design/                  UI mockups and spec (design/ui-revamp/UI-SPEC.md), references, Blender export notes
+├── CREDITS.md               fonts, art and libraries
 ├── docs/                    UML class diagram
 ├── screenshots/
 └── README.md
@@ -108,7 +112,7 @@ Tiled maps must have:
 - an object layer `coins` (rectangles);
 - an object layer `markers` with rectangles named `spawn` and `exit`.
 
-A stage may add its own named markers and object layers. Stage 3 (`gubat.tmx`) adds a `tikbalang` marker and a `bushes` layer. Image layers are decorative only. See `src/assets/maps/test.tmx`.
+A stage may add its own named markers and object layers. Stage 2 (`palengke.tmx`) adds `tonyo` and `cave` markers and `torches` and `wakwak` (roost) layers. Stage 3 (`gubat.tmx`) adds a `tikbalang` marker and a `bushes` layer. Image layers are decorative only. See `src/assets/maps/test.tmx`.
 
 ## Team members and roles
 
@@ -125,29 +129,33 @@ A stage may add its own named markers and object layers. Stage 3 (`gubat.tmx`) a
 | Encapsulation | `Player` keeps stats and coins private; `changeCourage()`/`changeSanity()` clamp to 0..100 and `spendCoins()` rejects overspending. `Inventory.getAll()` returns a read-only list. `GlowingBush` hides its search progress and gives its clue piece only once. `StageTimer` owns its paused/running state. Shop item names live in one place (`Shop.AGIMAT`, ...). |
 | Inheritance | `ForestGame extends Game`; `GameStage`, `MainMenuScreen`, `GameOverScreen`, `CutScene` extend `ScreenAdapter`; five stages extend `GameStage`; `Weapon`/`Consumable`/`Accessory` extend `Item`; `Potion extends Consumable`; six creatures extend `Creature`. |
 | Abstraction | `GameStage`, `Item` and `Creature` are abstract; `Interactable` is an interface shared by creatures and `GlowingBush` (a bush is not a creature, but Dayo interacts with both the same way). |
-| Polymorphism | `ForestGame` holds the current stage as a `GameStage` and LibGDX calls `render()` on it; each stage overrides `init()`, `update()` and `handleInput()`, and Stage 3 overrides the drain hooks `courageDrainPerSecond()`/`sanityDrainPerSecond()`. `Item.use()` and `Interactable.interact()` are overridden per class: Tonyo opens the shop, Nuno asks riddles, the Tikbalang starts the timer, a bush starts a search. |
+| Polymorphism | `ForestGame` holds the current stage as a `GameStage` and LibGDX calls `render()` on it; each stage overrides `init()`, `update()` and `handleInput()`, Stages 3 and 4 override the drain hooks `courageDrainPerSecond()`/`sanityDrainPerSecond()`, and Stage 4 overrides `isFailed()` so 0 Courage starts a vision instead of a game over. `Item.use()` and `Interactable.interact()` are overridden per class: Tonyo opens the shop, Nuno asks riddles, the Tikbalang starts the timer, a bush starts a search. |
 | Exception handling | `AssetLoader` catches missing images and uses a placeholder; `Player.useItem()` rejects items not in the inventory; `InsufficientCoinsException` for the shop. |
-| Arrays and collections | `TileMap` copies the Tiled `solid` layer into a `boolean[][]` for collision; arrays hold the Stage 1 color pattern and the Stage 3 clue; `ArrayList` for coins, inventory, shop stock, bushes and the collected clue pieces. |
+| Arrays and collections | `TileMap` copies the Tiled `solid` layer into a `boolean[][]` for collision; arrays hold the Stage 1 color pattern and the Stage 3 clue; `ArrayList` for coins, inventory, shop stock, bushes, torches, the Wakwak swarm and the collected clue pieces. |
 
 ## Testing
 
-`./gradlew test` (from `src/`) runs 43 JUnit 5 tests covering:
+`./gradlew test` (from `src/`) runs 64 JUnit 5 tests covering:
 
 - player movement, collision and stats;
 - the stage timer (including the paused Stage 3 clock);
 - per-stage Courage/Sanity drain;
 - Tiled map markers and the `gubat.tmx` map contract;
 - bush searching with and without weapons, and the Tikbalang starting the timer;
-- the dialogue box (typing, paging, questions that do not pause) and fading notices;
-- the Agimat timer and Sanity shield, riddles, cutscenes and the potion duel (including a duel Dayo can lose).
+- the dialogue box (typing, paging, questions that do not pause), fading notices and the game-over reason;
+- full-screen scaling (16:9, 16:10 and ultrawide screens keep the game's shape);
+- ambient effects (fireflies, falling leaves and cave dust stay on screen and blink within range, each stage gets its own mix);
+- scenery art: the Blender parallax-v2 layers load first with the older art as fallback, and swaying grass and ferns grow only on top of ground tiles, the same way every time;
+- Wakwak Cave torches (5 s burn, 10 s relight, light radius), the swarm's slowdown and retreat, the Rosary, and the cave map contract;
+- the Agimat timer and Sanity shield, riddles and the Nuno's reset, Stage 4's fear vision, cutscenes and the potion duel (including a duel Dayo can lose).
 
 Every stage was also smoke-run from the intro to the duel before release.
 
 ## Screenshots
 
-| Main menu | Stage 1: Ang Simula | Stage 4: Tulay | Stage 5: Potion duel |
+| Main menu | Stage 1: Ang Simula | Tonyo's shop | Stage 5: Potion duel |
 |---|---|---|---|
-| ![Main menu](screenshots/baseline-main-menu.png) | ![Stage 1](screenshots/phebe-merged-simula.png) | ![Stage 4](screenshots/phebe-tulay.png) | ![Stage 5](screenshots/phebe-duel.png) |
+| ![Main menu](screenshots/qa-ui-main-menu.png) | ![Stage 1](screenshots/qa-ui-stage1.png) | ![Shop](screenshots/qa-ui-shop.png) | ![Stage 5](screenshots/qa-ui-duel.png) |
 
 Screenshots of the introduction, Stages 2 and 3 and the ending will be added with the final art.
 

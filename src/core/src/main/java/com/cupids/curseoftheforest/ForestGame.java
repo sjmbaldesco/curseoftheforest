@@ -3,12 +3,14 @@ package com.cupids.curseoftheforest;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.cupids.curseoftheforest.player.Player;
 import com.cupids.curseoftheforest.screens.CutScene;
 import com.cupids.curseoftheforest.screens.GameOverScreen;
+import com.cupids.curseoftheforest.screens.Letterbox;
 import com.cupids.curseoftheforest.screens.MainMenuScreen;
 import com.cupids.curseoftheforest.screens.Theme;
 import com.cupids.curseoftheforest.stages.GameStage;
@@ -36,16 +38,56 @@ public class ForestGame extends Game {
     private AssetLoader assetLoader;
     private SpriteBatch batch;
     private BitmapFont font;
+    private BitmapFont titleFont;
     private Player player;
     private GameStage currentStage;
     private CutScene introScene;
     private int stageIndex;
+    private final DisplayToggle displayToggle;
+
+    /** Uses libGDX's standard fullscreen for F11. */
+    public ForestGame() {
+        this(null);
+    }
+
+    /** @param displayToggle how F11 switches to full screen; null for libGDX's standard fullscreen */
+    public ForestGame(DisplayToggle displayToggle) {
+        this.displayToggle = displayToggle != null ? displayToggle : DisplayToggle.standard();
+    }
+
+    /**
+     * Each frame: F11 (or Alt+Enter) toggles full screen, then the current screen draws into the
+     * letterboxed 960 by 540 area, so the game and its UI scale up without stretching.
+     */
+    @Override
+    public void render() {
+        boolean altEnter = Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
+                && (Gdx.input.isKeyPressed(Input.Keys.ALT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.ALT_RIGHT));
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F11) || altEnter) {
+            displayToggle.toggleFullscreen();
+        }
+
+        int screenWidth = Gdx.graphics.getBackBufferWidth();
+        int screenHeight = Gdx.graphics.getBackBufferHeight();
+        Letterbox box = Letterbox.fit(screenWidth, screenHeight, WORLD_WIDTH, WORLD_HEIGHT);
+        // Black bars first, then limit drawing (and each screen's own clear) to the game area.
+        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+        Gdx.gl.glViewport(0, 0, screenWidth, screenHeight);
+        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        Gdx.gl.glViewport(box.x, box.y, box.width, box.height);
+        Gdx.gl.glEnable(GL20.GL_SCISSOR_TEST);
+        Gdx.gl.glScissor(box.x, box.y, box.width, box.height);
+        super.render();
+        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+    }
 
     @Override
     public void create() {
         assetLoader = new AssetLoader();
         batch = new SpriteBatch();
         font = Theme.loadFont();
+        titleFont = Theme.loadTitleFont();
         setScreen(new MainMenuScreen(this));
     }
 
@@ -147,6 +189,11 @@ public class ForestGame extends Game {
         return font;
     }
 
+    /** The heading font (28 px); Theme owns it and frees it with the others. */
+    public BitmapFont getTitleFont() {
+        return titleFont;
+    }
+
     public Player getPlayer() {
         return player;
     }
@@ -157,7 +204,6 @@ public class ForestGame extends Game {
         disposeIntro();
         disposeCurrentStage();
         batch.dispose();
-        font.dispose();
         Theme.dispose();
         assetLoader.dispose();
     }

@@ -14,6 +14,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.cupids.curseoftheforest.AssetLoader;
 import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.player.Player;
 import com.cupids.curseoftheforest.screens.DialogueBox;
@@ -22,6 +23,8 @@ import com.cupids.curseoftheforest.screens.KeyPrompt;
 import com.cupids.curseoftheforest.screens.MenuText;
 import com.cupids.curseoftheforest.screens.Theme;
 import com.cupids.curseoftheforest.screens.Toast;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Base class for the five stages. It runs the shared frame loop (input, player physics, coins,
@@ -35,6 +38,8 @@ public abstract class GameStage extends ScreenAdapter {
     private static final float MAX_DELTA = 1 / 30f;
     /** How far below the map the player can fall before the stage counts as failed. */
     private static final float FALL_LIMIT = -64f;
+    /** The glowing Blender coin, then the older plain spin; the still coin if both are missing. */
+    private static final String COIN_GLOW_SHEET = "images/animated/coin_spin_glow.png";
     private static final String COIN_SHEET = "images/coin-sheet.png";
     /**
      * How much of the world the camera shows, compared with the window. At 0.5 the camera sees a
@@ -65,6 +70,11 @@ public abstract class GameStage extends ScreenAdapter {
     private Animation<TextureRegion> coinSpin;
     private float coinTime;
     private ParallaxBackground parallax;
+    /** Fireflies, leaves, mist and dust for this stage; null when it has none. */
+    private Ambience ambience;
+    /** Swaying grass and ferns on the ground of the map they were grown for. */
+    private Foliage foliage;
+    private TileMap foliageMap;
     /** Fractions of a point drained so far; stats are whole numbers, so drain is banked. */
     private float courageDrainBank;
     private float sanityDrainBank;
@@ -113,6 +123,34 @@ public abstract class GameStage extends ScreenAdapter {
     // ---------------------------------------------------------------- talking to the player
 
     /** Sets the one-line objective shown in the HUD, e.g. "Talk to the Tikbalang". */
+    /** How far the screen tilts this frame, in degrees. Stage 4's fear vision overrides it. */
+    protected float screenTilt() {
+        return 0f;
+    }
+
+    /** False while coins on the current map should be hidden and cannot be taken. */
+    protected boolean coinsActive() {
+        return true;
+    }
+
+    /**
+     * Shows another map and background in place of this stage's own (Stage 4 sends Dayo back to an
+     * earlier stage in a vision). The stage keeps its own references to swap them back later.
+     */
+    protected void showScenery(TileMap map, ParallaxBackground background) {
+        tileMap = Objects.requireNonNull(map, "map");
+        parallax = background;
+    }
+
+    /** False where no grass or ferns should grow (Stage 2's cave floor is bare rock). */
+    protected boolean growsFoliageAt(float worldX) {
+        return true;
+    }
+
+    protected ParallaxBackground getParallax() {
+        return parallax;
+    }
+
     protected void setGoal(String goal) {
         this.goal = goal == null ? "" : goal;
     }
@@ -140,13 +178,19 @@ public abstract class GameStage extends ScreenAdapter {
         player = game.getPlayer();
         checkpoint = player.saveCheckpoint();
         coinTexture = game.getAssetLoader().loadImage("images/coin.png");
-        if (Gdx.files.internal(COIN_SHEET).exists()) {
-            Texture sheet = game.getAssetLoader().loadImage(COIN_SHEET);
-            sheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-            coinSpin = new Animation<>(0.08f, TextureRegion.split(sheet, 32, 32)[0]);
-            coinSpin.setPlayMode(Animation.PlayMode.LOOP);
+        AssetLoader assets = game.getAssetLoader();
+        coinSpin = assets.loadStrip(COIN_GLOW_SHEET, 32, 0.08f);
+        if (coinSpin == null) {
+            coinSpin = assets.loadStrip(COIN_SHEET, 32, 0.08f);
         }
-        parallax = ParallaxBackground.forStage(game.getAssetLoader(), name);
+        parallax = ParallaxBackground.forStage(assets, name);
+        Ambience.Settings ambient = Ambience.settingsFor(name);
+        if (ambience == null && ambient != null) {
+            // A stage with a fog image does not need the mist drawn in code as well.
+            ambience = new Ambience(parallax != null && parallax.hasFog() ? ambient.withoutMist() : ambient, name.hashCode());
+            ambience.setSprites(assets.loadStrip(Ambience.FIREFLY_SHEET, 16, 0.1f), assets.loadStrip(ambient.leafSheet(), 16, 0.1f));
+        }
+        foliage = null;
         setUp();
     }
 
@@ -201,7 +245,7 @@ public abstract class GameStage extends ScreenAdapter {
         handleInput();
 
         player.update(delta, tileMap);
-        if (tileMap.collectCoinAt(player.getBounds())) {
+        if (coinsActive() && tileMap.collectCoinAt(player.getBounds())) {
             player.addCoins(1);
         }
         if (timer != null) {
@@ -257,8 +301,15 @@ public abstract class GameStage extends ScreenAdapter {
         ScreenUtils.clear(parallax != null ? Theme.NIGHT : Color.valueOf("6B9EBF"));
         followPlayer();
         SpriteBatch batch = game.getBatch();
+        float frameTime = Math.min(Gdx.graphics.getDeltaTime(), MAX_DELTA);
+        // How far the camera's left edge is from the map's start, in window pixels.
+        float cameraLeft = (camera.position.x - camera.viewportWidth / 2) / CAMERA_ZOOM;
         if (parallax != null) {
             parallax.renderBack(batch, camera);
+        }
+        if (ambience != null) {
+            ambience.update(frameTime); // keeps moving even while a conversation pauses the stage
+            ambience.renderBack(batch, cameraLeft);
         }
         tileMap.render(camera);
         if (parallax != null) {
@@ -268,10 +319,22 @@ public abstract class GameStage extends ScreenAdapter {
         coinTime += Gdx.graphics.getDeltaTime();
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        for (Rectangle coin : tileMap.getCoinMarkers()) {
+        if (foliageMap != tileMap) {
+            // Grown on first draw (after the stage set up its markers) and again if the map changes.
+            foliageMap = tileMap;
+            AssetLoader assets = game.getAssetLoader();
+            foliage = new Foliage(tileMap, this::growsFoliageAt,
+                    assets.loadStrip(Foliage.GRASS_SHEET, 32, 0.15f), assets.loadStrip(Foliage.FERN_SHEET, 48, 0.18f));
+            foliage.setTint(Foliage.tintFor(name));
+        }
+        foliage.update(frameTime);
+        foliage.render(batch); // behind the coins, so a tuft never hides one
+        for (Rectangle coin : coinsActive() ? tileMap.getCoinMarkers() : List.<Rectangle>of()) {
             if (coinSpin != null) {
                 // The coin art is 32 px but the map marks coins as 16 px; centre the sprite on the marker.
-                batch.draw(coinSpin.getKeyFrame(coinTime), coin.x + coin.width / 2 - 16, coin.y + coin.height / 2 - 16, 32, 32);
+                // Each coin bobs gently, out of step with its neighbours.
+                float bob = Math.round(MathUtils.sin(coinTime * 3f + coin.x * 0.05f) * 2f);
+                batch.draw(coinSpin.getKeyFrame(coinTime), coin.x + coin.width / 2 - 16, coin.y + coin.height / 2 - 16 + bob, 32, 32);
             } else {
                 batch.draw(coinTexture, coin.x, coin.y, coin.width, coin.height);
             }
@@ -279,6 +342,9 @@ public abstract class GameStage extends ScreenAdapter {
         drawWorld(batch);
         player.render(batch);
         batch.end();
+        if (ambience != null) {
+            ambience.renderFront(batch, cameraLeft);
+        }
         if (parallax != null) {
             parallax.renderForeground(batch, camera);
             // The foreground draws in window space; put the world camera back for the HUD to save.
@@ -296,8 +362,8 @@ public abstract class GameStage extends ScreenAdapter {
             camera.project(promptSpot, 0, 0, ForestGame.WORLD_WIDTH, ForestGame.WORLD_HEIGHT);
             KeyPrompt.draw(batch, font, promptKey, promptAction, promptSpot.x, promptSpot.y + 6);
         }
-        // Under the HUD bar, or just above the item bar while the talking box is up.
-        toast.render(batch, font, dialogue.isOpen() ? 130f : 468f);
+        // Under the HUD bar, or under the talking box while it is up (UI spec: y 70 or 232 from the top).
+        toast.render(batch, font, dialogue.isOpen() ? dialogue.bottomY() - 12 : ForestGame.WORLD_HEIGHT - 70);
         dialogue.render(batch, font);
         batch.end();
     }
@@ -310,6 +376,12 @@ public abstract class GameStage extends ScreenAdapter {
         camera.position.x = snap(MathUtils.clamp(x, halfW, Math.max(halfW, tileMap.getPixelWidth() - halfW)));
         float y = player.getY() + Player.HEIGHT / 2;
         camera.position.y = snap(MathUtils.clamp(y, halfH, Math.max(halfH, tileMap.getPixelHeight() - halfH)));
+        camera.up.set(0, 1, 0);
+        camera.direction.set(0, 0, -1);
+        float tilt = screenTilt();
+        if (tilt != 0) {
+            camera.rotate(tilt);
+        }
         camera.update();
     }
 
@@ -333,6 +405,15 @@ public abstract class GameStage extends ScreenAdapter {
                 || (timer != null && timer.isExpired());
     }
 
+    /** One sentence for the game-over screen saying why the stage was lost. */
+    public String failureReason() {
+        if (player.getCourage() <= 0) return "Dayo's Courage ran out.";
+        if (player.getSanity() <= 0) return "Dayo's mind gave way.";
+        if (timer != null && timer.isExpired()) return "Time ran out.";
+        if (player.getY() < FALL_LIMIT) return "Dayo fell into the dark.";
+        return "Dayo was beaten.";
+    }
+
     /** True when Dayo touches the map's exit marker. Platform stages use this as their goal. */
     protected boolean reachedExit() {
         Rectangle exit = tileMap.getExit();
@@ -346,5 +427,9 @@ public abstract class GameStage extends ScreenAdapter {
     @Override
     public void dispose() {
         tileMap.dispose();
+        if (ambience != null) {
+            ambience.dispose();
+            ambience = null;
+        }
     }
 }

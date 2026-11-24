@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Align;
+import com.cupids.curseoftheforest.ForestGame;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,14 +26,20 @@ import java.util.List;
  */
 public class DialogueBox {
     /** How fast the text types out, in characters per second. */
-    static final float CHARS_PER_SECOND = 45f;
+    static final float CHARS_PER_SECOND = 40f;
 
-    // Layout in window pixels (960 by 540): under the HUD bar, above where Dayo walks.
-    private static final float BOX_X = 16f;
-    private static final float BOX_Y = 330f;
-    private static final float BOX_W = 928f;
-    private static final float BOX_H = 136f;
-    private static final float PORTRAIT_SIZE = 128f;
+    // Layout from the UI spec (mockups 01 and 10), in window pixels from the top-left: under the
+    // HUD bar, above where Dayo walks.
+    static final float BOX_X = 16f;
+    static final float BOX_TOP = 84f;
+    static final float BOX_W = 928f;
+    static final float BOX_H = 136f;
+    /** Taller when answer buttons sit inside it. */
+    static final float BOX_H_WITH_ANSWERS = 176f;
+    static final float TEXT_X = 170f;
+    private static final float BUTTON_W = 180f;
+    private static final float BUTTON_H = 48f;
+    private static final float BUTTON_GAP = 14f;
 
     private final List<String> lines = new ArrayList<>();
     private final List<String> choices = new ArrayList<>();
@@ -151,47 +158,62 @@ public class DialogueBox {
         return line.substring(0, Math.min(line.length(), (int) shownChars));
     }
 
+    /** Window y (from the bottom) of the box's lower edge, for whatever stacks under it. */
+    public float bottomY() {
+        return ForestGame.WORLD_HEIGHT - BOX_TOP - (choices.isEmpty() ? BOX_H : BOX_H_WITH_ANSWERS);
+    }
+
     public void render(SpriteBatch batch, BitmapFont font) {
         if (!open) {
             return;
         }
-        Color previous = new Color(font.getColor());
-        Theme.panel(batch, BOX_X, BOX_Y, BOX_W, BOX_H);
+        float height = choices.isEmpty() ? BOX_H : BOX_H_WITH_ANSWERS;
+        drawFrame(batch, speaker, portrait, height);
+        float top = ForestGame.WORLD_HEIGHT;
+        BitmapFont talk = Theme.font(Theme.Size.TALK);
+        talk.setColor(Theme.PAPER);
+        talk.draw(batch, getVisibleText(), TEXT_X, top - 112, BOX_X + BOX_W - 24 - TEXT_X, Align.left, true);
 
-        float textX = BOX_X + 20;
-        if (portrait != null) {
-            Theme.rect(batch, Theme.INK, BOX_X + 4, BOX_Y + 4, PORTRAIT_SIZE, PORTRAIT_SIZE);
-            batch.draw(portrait, BOX_X + 4, BOX_Y + 4, PORTRAIT_SIZE, PORTRAIT_SIZE);
-            textX = BOX_X + PORTRAIT_SIZE + 24;
-        }
-        float textWidth = BOX_X + BOX_W - 20 - textX;
-
-        if (!speaker.isEmpty()) {
-            // Name tag sitting on the box's top edge.
-            float tagWidth = Math.max(120f, speaker.length() * 13f + 28f);
-            Theme.rect(batch, Theme.INK, textX - 8, BOX_Y + BOX_H - 14, tagWidth, 30);
-            font.setColor(Theme.GOLD);
-            font.draw(batch, speaker, textX + 4, BOX_Y + BOX_H + 10);
-        }
-
-        font.setColor(Theme.INK);
-        font.draw(batch, getVisibleText(), textX, BOX_Y + BOX_H - 26, textWidth, Align.left, true);
-
+        float boxBottom = top - BOX_TOP - height;
         if (!choices.isEmpty()) {
-            float y = BOX_Y + 52;
-            float x = textX;
+            float x = TEXT_X;
+            float y = top - BOX_TOP - 100 - BUTTON_H;
             for (int i = 0; i < choices.size(); i++) {
                 String label = (i + 1) + "  " + choices.get(i);
-                KeyPrompt.keyCap(batch, font, String.valueOf(i + 1), x, y - 20);
-                font.setColor(Theme.INK);
-                font.draw(batch, choices.get(i), x + 30, y);
-                x += Math.max(150f, label.length() * 12f + 40f);
+                float w = Math.max(BUTTON_W, Theme.width(talk, label) + 40);
+                UiSkin.frame(batch, UiSkin.Frame.BUTTON, x, y, w, BUTTON_H);
+                Theme.textCentred(batch, Theme.Size.TALK, label, x + w / 2, y + 34, Theme.PAPER);
+                x += w + BUTTON_GAP;
             }
-        } else if (blocking && !isTyping() && (int) (blinkTime * 2.5f) % 2 == 0) {
-            font.setColor(Theme.LEAF);
-            font.draw(batch, "E  continue", BOX_X + BOX_W - 150, BOX_Y + 28);
+            Theme.textRight(batch, Theme.Size.SMALL, "[1-" + choices.size() + "] Answer", BOX_X + BOX_W - 20, boxBottom + 22, Theme.GOLD);
+        } else if (blocking && !isTyping()) {
+            Theme.textRight(batch, Theme.Size.BODY, "[E] continue", BOX_X + BOX_W - 40, boxBottom + 28, Theme.GOLD);
+            if ((int) (blinkTime * 2) % 2 == 0) {
+                UiSkin.triangle(batch, Theme.GOLD, BOX_X + BOX_W - 34, boxBottom + 24);
+            }
         }
-        font.setColor(previous);
+        font.setColor(Theme.PAPER);
+    }
+
+    /**
+     * The empty talk box: wooden frame, portrait in its own frame and the speaker's name tag on
+     * the top edge. Shared with stages that write their own text inside it (Lola's colours).
+     * {@code height} is the box height in window pixels; it hangs from 84 px below the top.
+     */
+    public static void drawFrame(SpriteBatch batch, String speaker, TextureRegion portrait, float height) {
+        float top = ForestGame.WORLD_HEIGHT;
+        UiSkin.frame(batch, UiSkin.Frame.TALKBOX, BOX_X, top - BOX_TOP - height, BOX_W, height);
+        if (portrait != null) {
+            UiSkin.frame(batch, UiSkin.Frame.PORTRAIT, 26, top - 92 - 120, 120, 120);
+            batch.draw(portrait, 38, top - 92 - 108, 96, 96);
+        }
+        if (speaker != null && !speaker.isEmpty()) {
+            float width = Theme.width(Theme.font(Theme.Size.TALK), speaker) + 40;
+            UiSkin.frame(batch, UiSkin.Frame.NAMETAG, 176, top - 66 - 36, width, 36);
+            BitmapFont talk = Theme.font(Theme.Size.TALK);
+            talk.setColor(Theme.NIGHT);
+            talk.draw(batch, speaker, 196, top - 74);
+        }
     }
 
     /**

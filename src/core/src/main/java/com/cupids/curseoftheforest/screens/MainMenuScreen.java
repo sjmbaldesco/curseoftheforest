@@ -4,13 +4,13 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.cupids.curseoftheforest.ForestGame;
 
-/** Title screen: New Game or Exit. */
+/** Title screen: New Game or Exit (layout from mockup 06). */
 public class MainMenuScreen extends ScreenAdapter {
+    static final String CONTROLS = "[A/D] Move  [SPACE] Jump  [E] Interact  [1-5] Choose  [F11] Full screen";
     private final ForestGame game;
     private Texture backdrop;
 
@@ -34,19 +34,23 @@ public class MainMenuScreen extends ScreenAdapter {
             backdrop = Theme.loadBackdrop(game.getAssetLoader(), "images/backgrounds/title.png");
         }
         SpriteBatch batch = game.getBatch();
-        BitmapFont font = game.getFont();
         MenuText.begin(batch);
         Theme.drawBackdrop(batch, backdrop);
-        Theme.rect(batch, Theme.LEAF, 0, 0, ForestGame.WORLD_WIDTH, 8);
-        Theme.rect(batch, Theme.GOLD, 280, 322, 400, 4);
-        MenuText.centered(batch, font, "Curse of the Forest", 400, 4f, Theme.PAPER);
-        MenuText.centered(batch, font, "Harana sa Dilim", 308, 2f, Theme.GOLD);
-        Theme.panel(batch, 330, 130, 300, 120);
-        font.setColor(Theme.INK);
-        MenuText.centered(batch, font, "ENTER  New Game", 214, 2f);
-        font.setColor(Theme.INK);
-        MenuText.centered(batch, font, "ESC  Exit", 166, 2f);
-        MenuText.centered(batch, font, "Move: A/D or arrows    Jump: SPACE/W/UP    Menu: ESC", 60, 1f, Theme.PAPER);
+        // Fiesta flags (banderitas) strung along the top edge.
+        int flagWidth = UiSkin.width("banderitas");
+        for (int x = 0; flagWidth > 0 && x < ForestGame.WORLD_WIDTH; x += flagWidth) {
+            UiSkin.image(batch, "banderitas", x, ForestGame.WORLD_HEIGHT - 28);
+        }
+        if (!UiSkin.image(batch, "logo", 260, ForestGame.WORLD_HEIGHT - 76 - 140)) {
+            Theme.title(batch, Theme.Size.HUGE, "Curse of the Forest", 480, 440, Theme.GOLD);
+        }
+        MenuText.button(batch, "[ENTER] New Game", 272, 296, true);
+        MenuText.button(batch, "[ESC] Exit", 338, 296, false);
+
+        float footerWidth = Theme.width(Theme.font(Theme.Size.SMALL), CONTROLS) + 40;
+        UiSkin.frame(batch, UiSkin.Frame.TOAST, (ForestGame.WORLD_WIDTH - footerWidth) / 2, 540 - 504, footerWidth, 32);
+        Theme.textCentred(batch, Theme.Size.SMALL, CONTROLS, 480, 540 - 480, Theme.PAPER);
+        Theme.textRight(batch, Theme.Size.SMALL, "CS-2103 | Team CUPIDS | BatStateU", 944, 540 - 518, Theme.MUTED);
         batch.end();
     }
 

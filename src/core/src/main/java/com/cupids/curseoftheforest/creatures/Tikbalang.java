@@ -10,7 +10,7 @@ import java.util.Objects;
  */
 public class Tikbalang extends Creature {
     private static final String CHALLENGE =
-            "Tikbalang: You are lost in my forest, Dayo. Find the pieces of the old saying before time runs out!";
+            "You are lost in my forest, Dayo. Find the pieces of the old saying before time runs out!";
 
     private final StageTimer forestTimer;
     private boolean challenged;

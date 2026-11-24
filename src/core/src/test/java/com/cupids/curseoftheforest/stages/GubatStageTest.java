@@ -27,6 +27,15 @@ class GubatStageTest {
     }
 
     @Test
+    void agimatHalvesTheSanityDrain() {
+        Player dayo = new Player(0, 0);
+        float withoutAgimat = GubatStage.sanityDrainFor(dayo);
+        dayo.getInventory().add(new Accessory(Shop.AGIMAT, 5, "", 0));
+        assertEquals(withoutAgimat / 2, GubatStage.sanityDrainFor(dayo), 0.0001f);
+        assertTrue(withoutAgimat > 0.5f, "the drain must be strong enough to notice");
+    }
+
+    @Test
     void gubatMapFollowsTheMapContract() throws Exception {
         File map = new File("../assets/maps/gubat.tmx");
         Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(map);

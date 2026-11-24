@@ -35,7 +35,7 @@ Filipino students and casual players interested in Philippine folklore and cultu
   4. **Tulay ng Nuno sa Punso:** offer the right food for three riddles to earn three potions.
   5. **Ang Tukso ng Mangkukulam:** potion duel. Stun beats Damage, Damage beats Heal, Heal beats Stun. The witch hides her pick.
 - Item effects that change later stages:
-  - The Agimat gives 3 minutes instead of 1.5 in Stage 3.
+  - The Agimat gives 3 minutes instead of 1.5 in Stage 3, and halves the forest's Sanity drain.
   - The Itak (x2) or Punyal (x1.5) makes bush searches faster.
   - The Malunggay Juice gives 5 minutes instead of 3 in Stage 4.
   - The Rosary softens the Wakwak's bite.
@@ -131,14 +131,15 @@ A stage may add its own named markers and object layers. Stage 3 (`gubat.tmx`) a
 
 ## Testing
 
-`./gradlew test` (from `src/`) runs 37 JUnit 5 tests covering:
+`./gradlew test` (from `src/`) runs 43 JUnit 5 tests covering:
 
 - player movement, collision and stats;
 - the stage timer (including the paused Stage 3 clock);
 - per-stage Courage/Sanity drain;
 - Tiled map markers and the `gubat.tmx` map contract;
 - bush searching with and without weapons, and the Tikbalang starting the timer;
-- the Agimat timer, riddles, cutscenes and the potion duel (including a duel Dayo can lose).
+- the dialogue box (typing, paging, questions that do not pause) and fading notices;
+- the Agimat timer and Sanity shield, riddles, cutscenes and the potion duel (including a duel Dayo can lose).
 
 Every stage was also smoke-run from the intro to the duel before release.
 

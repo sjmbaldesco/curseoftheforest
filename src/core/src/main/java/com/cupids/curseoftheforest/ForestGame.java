@@ -3,6 +3,7 @@ package com.cupids.curseoftheforest;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.cupids.curseoftheforest.player.Player;
@@ -28,6 +29,9 @@ public class ForestGame extends Game {
     /** Art hook: the intro's own background; Stage 4's bridge is the stand-in until it exists. */
     private static final String INTRO_BACKGROUND = "images/backgrounds/intro.png";
     private static final String INTRO_FALLBACK = "images/backgrounds/tulay.png";
+    /** Dayo's 5-frame strip: 4 walking frames, then a jump frame. */
+    private static final String DAYO_SHEET = "images/dayo.png";
+    private static final int DAYO_FRAMES = 5;
 
     private AssetLoader assetLoader;
     private SpriteBatch batch;
@@ -48,7 +52,9 @@ public class ForestGame extends Game {
     /** Starts a new run with a fresh Dayo: the introduction first, then Stage 1. */
     public void newGame() {
         player = new Player(0, 0);
-        player.setSprite(assetLoader.loadImage("images/player.png"));
+        Texture dayo = assetLoader.loadImage(DAYO_SHEET);
+        dayo.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        player.setSpriteSheet(dayo, DAYO_FRAMES);
         playIntro();
     }
 

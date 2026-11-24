@@ -4,9 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.creatures.DuwendeTonyo;
@@ -44,11 +42,13 @@ public class PalengkeStage extends GameStage {
     @Override
     protected void init() {
         wakwak = new Wakwak(Math.max(0f, player.getX() - 56f), player.getY() + Player.HEIGHT + 16f);
+        wakwak.setSpriteSheet(game.getAssetLoader().loadImage("images/wakwak.png"), 5);
         wakwak.interact(player);
         tonyo = new DuwendeTonyo(tileMap.getExit().x, tileMap.getExit().y);
         catchCooldown = 0f;
         reachedShop = false;
         shopMessage = "";
+        setGoal("Grab coins and reach Tonyo's stall. Outrun the Wakwak!");
     }
 
     @Override
@@ -68,6 +68,7 @@ public class PalengkeStage extends GameStage {
             courageLost = Math.min(player.getCourage(), penalty);
             player.changeCourage(-courageLost);
             catchCooldown = CATCH_COOLDOWN;
+            toast.warn("The Wakwak caught you! Courage -" + courageLost);
         }
     }
 
@@ -148,30 +149,11 @@ public class PalengkeStage extends GameStage {
         }
 
         super.render(delta);
-        if (game.getScreen() != this) {
-            return;
-        }
+    }
 
-        // Match the shared camera offset to draw the marker in HUD coordinates.
-        float halfWidth = ForestGame.WORLD_WIDTH / 2f;
-        float halfHeight = ForestGame.WORLD_HEIGHT / 2f;
-        float left = MathUtils.clamp(player.getX() + Player.WIDTH / 2 - halfWidth,
-                0f, Math.max(0f, tileMap.getPixelWidth() - ForestGame.WORLD_WIDTH));
-        float bottom = MathUtils.clamp(player.getY() - halfHeight,
-                0f, Math.max(0f, tileMap.getPixelHeight() - ForestGame.WORLD_HEIGHT));
-
-        SpriteBatch batch = game.getBatch();
-        BitmapFont font = game.getFont();
-        batch.begin();
-        font.draw(batch, "Collect coins and reach the exit. Wakwak is following you!",
-                12, ForestGame.WORLD_HEIGHT - 60);
-        if (catchCooldown > 0f) {
-            font.draw(batch, "Wakwak caught you! -" + courageLost + " Courage",
-                    12, ForestGame.WORLD_HEIGHT - 82);
-        }
-        font.draw(batch, "< Wakwak >", wakwak.getX() - left - 50f,
-                wakwak.getY() - bottom, 100f, Align.center, false);
-        batch.end();
+    @Override
+    protected void drawWorld(SpriteBatch batch) {
+        wakwak.render(batch);
     }
 
     private void drawShop() {

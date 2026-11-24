@@ -20,6 +20,19 @@ The `.ttf` is in `src/assets/fonts/`. The game uses bitmap copies at five sizes 
 - Animated sprites, fog bands and parallax v2 (`src/assets/images/animated/`, `src/assets/images/parallax-v2/`): made by the team in Blender for this game. Notes: `design/blender/MANIFEST.md`.
 - Character sprites, backgrounds and maps: made by the team for this game.
 
+## Music and sound effects
+
+All background music and most sound effects were synthesised by the team's own script,
+`tools/make_audio.py` (square, triangle and noise waves). They are original work, so no
+outside license applies. Re-create them with `python3 tools/make_audio.py` (needs numpy and ffmpeg).
+
+- `src/assets/audio/music/*.ogg`: menu, story, simula (Stage 1), cave (Stage 2), forest (Stage 3), nuno (Stage 4), duel (Stage 5)
+- `src/assets/audio/sfx/*.wav`, except the `ui_*` files below
+
+| Files | Source | Author | License |
+|---|---|---|---|
+| `src/assets/audio/sfx/ui_move.wav` (tick_001), `ui_tick.wav` (tick_002), `ui_select.wav` (confirmation_001), `ui_back.wav` (back_001), `ui_toast.wav` (open_001) | Kenney "Interface Sounds" 1.0, https://kenney.nl/assets/interface-sounds (WAV copy from https://github.com/Calinou/kenney-interface-sounds) | Kenney (www.kenney.nl) | CC0 1.0 (credit not required, given anyway) |
+
 ## Libraries and tools
 
 - [LibGDX](https://libgdx.com/) 1.13.1 (Apache License 2.0)

@@ -80,6 +80,8 @@ public class MangkukulamStage extends GameStage {
                 if (potion.getType() == choice) {
                     PotionType enemy = witch.choosePotion();
                     duel.resolveRound(potion, enemy);
+                    sfx("potion_throw");
+                    sfx(choice == enemy ? "hit_stun" : choice.beats(enemy) ? "round_win" : "round_lose");
                     lastThrows = "You: " + POTION_NAMES[choice.ordinal()] + "  vs  " + witch.getName() + ": "
                             + POTION_NAMES[enemy.ordinal()];
                     lastOutcomeBad = false;

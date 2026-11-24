@@ -133,8 +133,10 @@ public class TulayStage extends GameStage {
             if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1 + i)) {
                 if (nuno.offer(player, OFFERINGS[i])) {
                     toast.show("Correct! The Nuno gives you a potion.");
+                    sfx("correct");
                 } else {
                     player.changeCourage(-WRONG_OFFERING_COURAGE);
+                    sfx("wrong");
                     toast.warn("That is not the offering. Courage -" + WRONG_OFFERING_COURAGE);
                 }
                 break;
@@ -170,12 +172,16 @@ public class TulayStage extends GameStage {
         }
 
         vision.start(place);
+        sfx("whoosh");
+        game.getAudio().playMusic(place.mapPath.contains("gubat") ? "forest" : "cave");
         toast.warn("Your Courage breaks... you are back in the " + place.label + "!");
         setGoal("It is only fear. Hold on...");
     }
 
     private void wakeUp() {
         restoreBridge();
+        sfx("whoosh");
+        game.getAudio().playMusic("nuno");
         player.setPosition(wakeX, wakeY);
         player.changeCourage(COURAGE_AFTER_VISION - player.getCourage());
         nuno.reset(player);

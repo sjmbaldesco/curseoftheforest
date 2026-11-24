@@ -69,9 +69,11 @@ public class SimulaStage extends GameStage {
     }
 
     private void checkColor(int color) {
+        sfx("tone" + (color - 1));
         if (color != PATTERN[matched]) {
             matched = 0;
             feedback = "Wrong color. Start again from the first color.";
+            sfx("wrong");
             return;
         }
 

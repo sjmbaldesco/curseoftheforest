@@ -75,4 +75,20 @@ class PotionDuelTest {
         assertTrue(duel.isOver());
         assertFalse(duel.isWon());
     }
+
+    @Test void fullHealthDayoCanStillLoseTheDuel() {
+        Player player = new Player(0, 0);
+        Potion stun = new Potion(PotionType.STUN);
+        Potion damage = new Potion(PotionType.DAMAGE);
+        Potion heal = new Potion(PotionType.HEAL);
+        player.getInventory().add(stun);
+        player.getInventory().add(damage);
+        player.getInventory().add(heal);
+        PotionDuel duel = new PotionDuel(player);
+        assertEquals(4, duel.getPlayerHealth());
+        duel.resolveRound(stun, PotionType.HEAL);   // lose: 2 left
+        duel.resolveRound(damage, PotionType.STUN); // lose: 0 left
+        assertTrue(duel.isOver());
+        assertFalse(duel.isWon());
+    }
 }

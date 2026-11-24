@@ -21,6 +21,19 @@ class StageTimerTest {
     }
 
     @Test
+    void pausedTimerWaitsForStart() {
+        StageTimer timer = new StageTimer(2f, false);
+        timer.tick(5f);
+        assertFalse(timer.isRunning());
+        assertFalse(timer.isExpired());
+        assertEquals(2f, timer.getRemaining());
+        timer.start();
+        timer.tick(1f);
+        assertTrue(timer.isRunning());
+        assertEquals(1f, timer.getRemaining(), 0.0001f);
+    }
+
+    @Test
     void rejectsNegativeStart() {
         assertThrows(IllegalArgumentException.class, () -> new StageTimer(-1f));
     }

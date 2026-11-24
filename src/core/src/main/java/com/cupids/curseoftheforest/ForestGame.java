@@ -1,9 +1,12 @@
 package com.cupids.curseoftheforest;
 
 import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.cupids.curseoftheforest.player.Player;
+import com.cupids.curseoftheforest.screens.CutScene;
 import com.cupids.curseoftheforest.screens.GameOverScreen;
 import com.cupids.curseoftheforest.screens.MainMenuScreen;
 import com.cupids.curseoftheforest.stages.GameStage;
@@ -21,12 +24,16 @@ public class ForestGame extends Game {
     public static final int WORLD_WIDTH = 960;
     public static final int WORLD_HEIGHT = 540;
     public static final int STAGE_COUNT = 5;
+    /** Art hook: the intro's own background; Stage 4's bridge is the stand-in until it exists. */
+    private static final String INTRO_BACKGROUND = "images/backgrounds/intro.png";
+    private static final String INTRO_FALLBACK = "images/backgrounds/tulay.png";
 
     private AssetLoader assetLoader;
     private SpriteBatch batch;
     private BitmapFont font;
     private Player player;
     private GameStage currentStage;
+    private CutScene introScene;
     private int stageIndex;
 
     @Override
@@ -37,11 +44,35 @@ public class ForestGame extends Game {
         setScreen(new MainMenuScreen(this));
     }
 
-    /** Starts a new run from Stage 1 with a fresh Dayo. */
+    /** Starts a new run with a fresh Dayo: the introduction first, then Stage 1. */
     public void newGame() {
         player = new Player(0, 0);
         player.setSprite(assetLoader.loadImage("images/player.png"));
-        startStage(0);
+        playIntro();
+    }
+
+    private void playIntro() {
+        disposeIntro();
+        String background = Gdx.files.internal(INTRO_BACKGROUND).exists() ? INTRO_BACKGROUND : INTRO_FALLBACK;
+        introScene = new CutScene(CutScene.intro(), assetLoader.loadImage(background)) {
+            @Override
+            public void render(float delta) {
+                if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+                    toMainMenu();
+                    return;
+                }
+                super.render(delta);
+            }
+        };
+        introScene.setOnFinished(() -> startStage(0));
+        setScreen(introScene);
+    }
+
+    private void disposeIntro() {
+        if (introScene != null) {
+            introScene.dispose();
+            introScene = null;
+        }
     }
 
     private GameStage createStage(int index) {
@@ -56,6 +87,7 @@ public class ForestGame extends Game {
     }
 
     private void startStage(int index) {
+        disposeIntro();
         disposeCurrentStage();
         stageIndex = index;
         currentStage = createStage(index);
@@ -68,7 +100,7 @@ public class ForestGame extends Game {
         if (stageIndex + 1 < STAGE_COUNT) {
             startStage(stageIndex + 1);
         } else {
-            // TODO: play the ending cutscene (Ang Sagot) before returning to the menu.
+            // Stage 5 already played the serenade and the ending (Ang Sagot); the journey is over.
             toMainMenu();
         }
     }
@@ -84,6 +116,7 @@ public class ForestGame extends Game {
     }
 
     public void toMainMenu() {
+        disposeIntro();
         disposeCurrentStage();
         setScreen(new MainMenuScreen(this));
     }
@@ -114,6 +147,7 @@ public class ForestGame extends Game {
     @Override
     public void dispose() {
         super.dispose();
+        disposeIntro();
         disposeCurrentStage();
         batch.dispose();
         font.dispose();

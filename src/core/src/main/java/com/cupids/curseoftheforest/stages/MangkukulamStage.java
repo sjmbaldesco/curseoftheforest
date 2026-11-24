@@ -8,14 +8,14 @@ import com.cupids.curseoftheforest.ForestGame;
 import com.cupids.curseoftheforest.creatures.Mangkukulam;
 import com.cupids.curseoftheforest.items.Potion;
 import com.cupids.curseoftheforest.minigames.PotionDuel;
+import com.cupids.curseoftheforest.minigames.Shop;
 import com.cupids.curseoftheforest.minigames.PotionType;
 import com.cupids.curseoftheforest.screens.CutScene;
 import com.cupids.curseoftheforest.screens.MenuText;
 
-/** Telegraphs the enemy potion before each choice, then plays the final story scenes. */
+/** Potion duel against a witch who hides her choice, then the final story scenes. */
 public class MangkukulamStage extends GameStage {
     private Mangkukulam witch;
-    private int round;
     private String message;
     private CutScene scene;
     private int sceneIndex;
@@ -27,17 +27,13 @@ public class MangkukulamStage extends GameStage {
     @Override
     protected void init() {
         if (scene != null) scene.dispose();
-        scene = new CutScene(CutScene.flashbackTwo(), game.getAssetLoader().loadImage("images/backgrounds/mangkukulam.png"));
-        sceneIndex = 0;
-        round = 0;
+        // The flashback plays once; a retry goes straight back to the duel.
+        scene = retried ? null
+                : new CutScene(CutScene.flashbackTwo(), game.getAssetLoader().loadImage("images/backgrounds/mangkukulam.png"));
+        sceneIndex = retried ? 1 : 0;
         message = "Approach the Mangkukulam and press E.";
         witch = new Mangkukulam(480, 192);
         witch.setSpriteSheet(game.getAssetLoader().loadImage("images/characters/mangkukulam.png"), 5);
-    }
-
-    private PotionType enemyChoice() {
-        PotionType[] choices = {PotionType.DAMAGE, PotionType.HEAL, PotionType.STUN};
-        return choices[round % choices.length];
     }
 
     @Override
@@ -50,12 +46,12 @@ public class MangkukulamStage extends GameStage {
             PotionType choice = PotionType.values()[i];
             for (Potion potion : duel.getPlayerPotions()) {
                 if (potion.getType() == choice) {
-                    PotionType enemy = enemyChoice();
+                    PotionType enemy = witch.choosePotion();
                     duel.resolveRound(potion, enemy);
-                    round++;
-                    message = choice == enemy ? "Tie: both potions are spent."
+                    String reveal = "She threw " + enemy + ". ";
+                    message = reveal + (choice == enemy ? "Tie: both potions are spent."
                             : choice.beats(enemy) ? "Your potion wins! Enemy loses 2 health."
-                            : "Enemy potion wins! You lose 2 health.";
+                            : "Enemy potion wins! You lose 2 health.");
                     return;
                 }
             }
@@ -74,7 +70,7 @@ public class MangkukulamStage extends GameStage {
             failed = true;
         }
         if (duel.isWon() && reachedExit() && !isFailed() && sceneIndex == 1) {
-            boolean hasGuitarStrings = player.getInventory().has("Kwerdas ng Gitara");
+            boolean hasGuitarStrings = player.getInventory().has(Shop.KWERDAS);
             scene = new CutScene(CutScene.serenade(hasGuitarStrings),
                     game.getAssetLoader().loadImage("images/backgrounds/ending.png"));
             sceneIndex = 2;
@@ -112,7 +108,7 @@ public class MangkukulamStage extends GameStage {
         PotionDuel duel = witch.getDuel();
         if (duel != null) {
             game.getFont().draw(batch, "Dayo HP: " + duel.getPlayerHealth() + "    Mangkukulam HP: " + duel.getEnemyHealth(), 20, 150);
-            game.getFont().draw(batch, duel.isWon() ? "You won! Walk to the far right exit." : "Enemy prepares: " + enemyChoice(), 20, 125);
+            game.getFont().draw(batch, duel.isWon() ? "You won! Walk to the far right exit." : "The Mangkukulam hides her potion. Choose yours.", 20, 125);
         }
         game.getFont().draw(batch, "1 Stun > Damage     2 Damage > Heal     3 Heal > Stun", 20, 100);
         game.getFont().draw(batch, "Each potion is used once. Ties cost a potion. Higher HP wins if supplies run out.", 20, 75);

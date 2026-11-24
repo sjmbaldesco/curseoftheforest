@@ -18,4 +18,16 @@ class CreatureInteractionTest {
         witch.interact(player);
         assertSame(duel, witch.getDuel());
     }
+
+    @Test void witchChoiceIsRandomButRepeatableWithASeed() {
+        Mangkukulam a = new Mangkukulam(0, 0, new java.util.Random(7));
+        Mangkukulam b = new Mangkukulam(0, 0, new java.util.Random(7));
+        java.util.Set<com.cupids.curseoftheforest.minigames.PotionType> seen = new java.util.HashSet<>();
+        for (int i = 0; i < 50; i++) {
+            var choice = a.choosePotion();
+            assertEquals(choice, b.choosePotion());
+            seen.add(choice);
+        }
+        assertEquals(3, seen.size(), "Over many rounds she uses every potion type");
+    }
 }

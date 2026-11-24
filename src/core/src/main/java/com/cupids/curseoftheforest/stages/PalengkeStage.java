@@ -14,6 +14,7 @@ import com.cupids.curseoftheforest.creatures.Wakwak;
 import com.cupids.curseoftheforest.items.Consumable;
 import com.cupids.curseoftheforest.items.Item;
 import com.cupids.curseoftheforest.minigames.InsufficientCoinsException;
+import com.cupids.curseoftheforest.minigames.Shop;
 import com.cupids.curseoftheforest.player.Player;
 import java.util.List;
 
@@ -102,7 +103,7 @@ public class PalengkeStage extends GameStage {
 
     private void drinkJuice() {
         for (Item item : player.getInventory().getAll()) {
-            if (item instanceof Consumable && "Malunggay Juice".equals(item.getName())) {
+            if (item instanceof Consumable && Shop.MALUNGGAY_JUICE.equals(item.getName())) {
                 int courageBefore = player.getCourage();
                 if (courageBefore == Player.MAX_STAT) {
                     shopMessage = "Courage is full. Save the juice for Stage 4.";

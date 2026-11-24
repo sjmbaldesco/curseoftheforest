@@ -13,12 +13,17 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Disposable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A level made in Tiled. The "solid" tile layer is copied into a 2D boolean array for collision,
  * and the "coins" and "markers" object layers give coin positions, the spawn point and the exit.
+ * Any other named rectangle in "markers" (for example "tikbalang") can be looked up with
+ * {@link #getMarker(String)}, and any other object layer (for example "bushes") with
+ * {@link #getObjects(String)}, so a stage can place things from the map instead of from code.
  *
  * <p>Row 0 is the bottom row, matching LibGDX's y-up coordinates.
  */
@@ -34,6 +39,7 @@ public class TileMap implements Disposable {
     private final ArrayList<Rectangle> coinMarkers = new ArrayList<>();
     private final Vector2 spawn = new Vector2();
     private final Rectangle exit = new Rectangle();
+    private final Map<String, Rectangle> markers = new HashMap<>();
 
     public TileMap() {
     }
@@ -48,9 +54,19 @@ public class TileMap implements Disposable {
     public void load(String path) {
         dispose();
         tiledMap = new TmxMapLoader().load(path);
+        try {
+            read(tiledMap);
+        } catch (IllegalStateException e) {
+            throw new IllegalStateException(path + ": " + e.getMessage(), e);
+        }
+        renderer = new OrthogonalTiledMapRenderer(tiledMap);
+    }
 
-        if (!(tiledMap.getLayers().get(SOLID_LAYER) instanceof TiledMapTileLayer layer)) {
-            throw new IllegalStateException(path + " has no tile layer named '" + SOLID_LAYER + "'.");
+    /** Copies collision, coins and markers out of an already loaded map. Needs no graphics. */
+    void read(TiledMap map) {
+        tiledMap = map;
+        if (!(map.getLayers().get(SOLID_LAYER) instanceof TiledMapTileLayer layer)) {
+            throw new IllegalStateException("no tile layer named '" + SOLID_LAYER + "'.");
         }
         tileSize = (int) layer.getTileWidth();
         solid = new boolean[layer.getHeight()][layer.getWidth()];
@@ -61,22 +77,26 @@ public class TileMap implements Disposable {
         }
 
         coinMarkers.clear();
-        for (Rectangle r : rectangles(COIN_LAYER)) {
-            coinMarkers.add(r);
-        }
-        MapLayer markers = tiledMap.getLayers().get(MARKER_LAYER);
-        if (markers != null) {
-            for (MapObject object : markers.getObjects()) {
-                if (object instanceof RectangleMapObject rect) {
-                    if ("spawn".equals(object.getName())) {
-                        rect.getRectangle().getPosition(spawn);
-                    } else if ("exit".equals(object.getName())) {
-                        exit.set(rect.getRectangle());
-                    }
+        coinMarkers.addAll(rectangles(COIN_LAYER));
+        markers.clear();
+        spawn.setZero();
+        exit.set(0, 0, 0, 0);
+        MapLayer markerLayer = map.getLayers().get(MARKER_LAYER);
+        if (markerLayer != null) {
+            for (MapObject object : markerLayer.getObjects()) {
+                if (object instanceof RectangleMapObject rect && object.getName() != null) {
+                    markers.put(object.getName(), new Rectangle(rect.getRectangle()));
                 }
             }
         }
-        renderer = new OrthogonalTiledMapRenderer(tiledMap);
+        Rectangle spawnMarker = markers.get("spawn");
+        if (spawnMarker != null) {
+            spawnMarker.getPosition(spawn);
+        }
+        Rectangle exitMarker = markers.get("exit");
+        if (exitMarker != null) {
+            exit.set(exitMarker);
+        }
     }
 
     private List<Rectangle> rectangles(String layerName) {
@@ -151,6 +171,17 @@ public class TileMap implements Disposable {
 
     public Rectangle getExit() {
         return exit;
+    }
+
+    /** The rectangle named {@code name} in the "markers" layer, or null if the map has none. */
+    public Rectangle getMarker(String name) {
+        Rectangle marker = markers.get(name);
+        return marker == null ? null : new Rectangle(marker);
+    }
+
+    /** Copies of every rectangle in the named object layer; empty if the layer is missing. */
+    public List<Rectangle> getObjects(String layerName) {
+        return tiledMap == null ? List.of() : rectangles(layerName);
     }
 
     @Override

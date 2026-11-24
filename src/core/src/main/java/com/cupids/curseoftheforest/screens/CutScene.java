@@ -18,6 +18,7 @@ public class CutScene extends ScreenAdapter {
     private final Texture background;
     private SpriteBatch batch;
     private BitmapFont font;
+    private Runnable onFinished;
 
     public CutScene(String[] lines, Texture background) {
         this.lines = Objects.requireNonNull(lines, "lines").clone();
@@ -28,6 +29,12 @@ public class CutScene extends ScreenAdapter {
     }
 
     public void advance() { if (!isFinished()) currentIndex++; }
+
+    /**
+     * Runs {@code action} once, on the frame the last line is dismissed. The scene draws nothing
+     * after that, so the action may switch screens and dispose this scene.
+     */
+    public void setOnFinished(Runnable action) { onFinished = action; }
     public String getCurrentLine() { return isFinished() ? "" : lines[currentIndex]; }
 
     @Override
@@ -40,6 +47,12 @@ public class CutScene extends ScreenAdapter {
         if (batch == null) show();
         if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
                 || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) advance();
+        if (isFinished() && onFinished != null) {
+            Runnable action = onFinished;
+            onFinished = null;
+            action.run();
+            return;
+        }
         ScreenUtils.clear(0.035f, 0.055f, 0.07f, 1);
         MenuText.begin(batch);
         if (background != null) batch.draw(background, 0, 180, 960, 360);

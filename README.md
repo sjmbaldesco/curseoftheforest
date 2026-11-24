@@ -63,7 +63,7 @@ Other commands (run from `src/`):
 
 ```bash
 ./gradlew test              # unit tests
-./gradlew lwjgl3:jar        # runnable jar in lwjgl3/build/libs/
+./gradlew lwjgl3:jar        # runnable jar in lwjgl3/build/libs/ (add --fullscreen when running it to start full screen)
 ```
 
 To open in IntelliJ IDEA: File > Open and select the `src` folder (the one with `settings.gradle`).
@@ -79,6 +79,7 @@ Controls:
 | 1-5 | Buy in the shop; U drinks the Malunggay Juice |
 | Enter/Space | Advance a cutscene |
 | Esc | Main menu |
+| F11 or Alt+Enter | Borderless full screen on/off (the window can also be resized; the game keeps its shape with black bars) |
 
 On the game-over screen, **R** retries the stage and **M** returns to the menu.
 
@@ -131,7 +132,7 @@ A stage may add its own named markers and object layers. Stage 2 (`palengke.tmx`
 
 ## Testing
 
-`./gradlew test` (from `src/`) runs 52 JUnit 5 tests covering:
+`./gradlew test` (from `src/`) runs 55 JUnit 5 tests covering:
 
 - player movement, collision and stats;
 - the stage timer (including the paused Stage 3 clock);
@@ -139,6 +140,7 @@ A stage may add its own named markers and object layers. Stage 2 (`palengke.tmx`
 - Tiled map markers and the `gubat.tmx` map contract;
 - bush searching with and without weapons, and the Tikbalang starting the timer;
 - the dialogue box (typing, paging, questions that do not pause) and fading notices;
+- full-screen scaling (16:9, 16:10 and ultrawide screens keep the game's shape);
 - Wakwak Cave torches (5 s burn, 10 s relight, light radius), the swarm's slowdown and retreat, the Rosary, and the cave map contract;
 - the Agimat timer and Sanity shield, riddles and the Nuno's reset, Stage 4's fear vision, cutscenes and the potion duel (including a duel Dayo can lose).
 

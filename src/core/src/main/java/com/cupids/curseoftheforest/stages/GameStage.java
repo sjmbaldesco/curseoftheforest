@@ -78,6 +78,11 @@ public abstract class GameStage extends ScreenAdapter {
     /** Fractions of a point drained so far; stats are whole numbers, so drain is banked. */
     private float courageDrainBank;
     private float sanityDrainBank;
+    /** Last frame's stats, to play a hurt sound when a big hit lands (drain is 1 point at a time). */
+    private int lastCourage;
+    private int lastSanity;
+    private int lastWholeSecondsLeft;
+    private float heartbeatClock;
     /** One-line current objective, shown in the HUD bar. */
     private String goal = "";
     /** This frame's "[E] Talk" tag, set by the stage each frame; null when there is none. */
@@ -207,6 +212,10 @@ public abstract class GameStage extends ScreenAdapter {
         completed = false;
         failed = false;
         timer = null;
+        lastCourage = player.getCourage();
+        lastSanity = player.getSanity();
+        lastWholeSecondsLeft = Integer.MAX_VALUE;
+        heartbeatClock = 0f;
         courageDrainBank = 0f;
         sanityDrainBank = 0f;
         goal = "";
@@ -234,6 +243,7 @@ public abstract class GameStage extends ScreenAdapter {
             if (Gdx.input.isKeyJustPressed(Input.Keys.E)
                     || Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
                     || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                sfx("ui_tick");
                 dialogue.advance();
             }
             promptKey = null;
@@ -247,12 +257,14 @@ public abstract class GameStage extends ScreenAdapter {
         player.update(delta, tileMap);
         if (coinsActive() && tileMap.collectCoinAt(player.getBounds())) {
             player.addCoins(1);
+            sfx("coin");
         }
         if (timer != null) {
             timer.tick(delta);
         }
         applyDrain(delta);
         update(delta);
+        playStatusSounds(delta);
 
         if (isComplete()) {
             game.onStageComplete(this);
@@ -281,6 +293,40 @@ public abstract class GameStage extends ScreenAdapter {
         }
     }
 
+    /** Plays a sound effect; safe when the stage has no game (unit tests). */
+    protected void sfx(String id) {
+        if (game != null) {
+            game.getAudio().play(id);
+        }
+    }
+
+    /** Hurt sound for big hits, a tick for the last 10 seconds, and a heartbeat when stats run low. */
+    private void playStatusSounds(float delta) {
+        int courage = player.getCourage();
+        int sanity = player.getSanity();
+        if (lastCourage - courage >= 5 || lastSanity - sanity >= 5) {
+            sfx("hurt");
+        }
+        lastCourage = courage;
+        lastSanity = sanity;
+
+        if (timer != null && timer.isRunning()) {
+            int whole = (int) Math.ceil(timer.getRemaining());
+            if (whole <= 10 && whole < lastWholeSecondsLeft && whole > 0) {
+                sfx("timer_tick");
+            }
+            lastWholeSecondsLeft = whole;
+        }
+
+        if (Math.min(courage, sanity) < 25) {
+            heartbeatClock -= delta;
+            if (heartbeatClock <= 0f) {
+                sfx("heartbeat");
+                heartbeatClock = 1.2f;
+            }
+        }
+    }
+
     private void readMovementKeys() {
         int dir = 0;
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A)) {
@@ -293,6 +339,9 @@ public abstract class GameStage extends ScreenAdapter {
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)
                 || Gdx.input.isKeyJustPressed(Input.Keys.UP)
                 || Gdx.input.isKeyJustPressed(Input.Keys.W)) {
+            if (player.isOnGround()) {
+                sfx("jump");
+            }
             player.jump();
         }
     }

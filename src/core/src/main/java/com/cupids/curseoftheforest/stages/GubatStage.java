@@ -130,6 +130,7 @@ public class GubatStage extends GameStage {
             showPrompt("E", "Talk", tikbalang.getX() + 32, tikbalang.getY() + 64);
             if (pressedE) {
                 tikbalang.interact(player);
+                sfx("tikbalang");
                 dialogue.say(tikbalang.getName(), tikbalangPortrait, tikbalang.getLine());
                 return;
             }
@@ -180,10 +181,12 @@ public class GubatStage extends GameStage {
     private void onBushSearched(GlowingBush bush) {
         String piece = bush.takePiece();
         if (piece == null) {
+            sfx("bush");
             toast.show("Only leaves here... and " + bush.getCoins() + " coin.");
             return;
         }
         pieces.add(piece);
+        sfx("piece");
         if (hasAllPieces()) {
             dialogue.say("Dayo", null, "\"Baliktarin ang damit!\" Dayo turns his shirt inside out.",
                     "The forest stops spinning. The spell is broken. Run to the exit!");

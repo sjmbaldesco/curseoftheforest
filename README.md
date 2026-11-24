@@ -81,6 +81,7 @@ Controls:
 | Enter/Space | Advance a cutscene |
 | Esc | Main menu |
 | F11 or Alt+Enter | Borderless full screen on/off (the window can also be resized; the game keeps its shape with black bars) |
+| F9 | Mute / unmute music and sound |
 
 On the game-over screen, **R** retries the stage and **M** returns to the menu.
 

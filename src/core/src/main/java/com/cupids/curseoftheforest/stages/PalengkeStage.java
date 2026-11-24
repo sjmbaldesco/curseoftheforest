@@ -156,6 +156,7 @@ public class PalengkeStage extends GameStage {
             if (catchCooldown == 0f && wakwak.hasCaughtDayo()) {
                 int lost = Math.min(player.getCourage(), bitePenalty(player));
                 player.changeCourage(-lost);
+                sfx("wakwak");
                 catchCooldown = CATCH_COOLDOWN;
                 wakwak.retreat();
                 toast.warn("The Wakwak caught you! Courage -" + lost);
@@ -245,6 +246,7 @@ public class PalengkeStage extends GameStage {
                     return;
                 }
                 player.useItem(item);
+                sfx("use_item");
                 shopMessage = "Drank Malunggay Juice. Recovered "
                         + (player.getCourage() - courageBefore) + " Courage.";
                 return;
@@ -260,8 +262,10 @@ public class PalengkeStage extends GameStage {
         }
         try {
             tonyo.getShop().purchase(player, item);
+            sfx("buy");
             shopMessage = "Bought " + item.getName() + ".";
         } catch (InsufficientCoinsException exception) {
+            sfx("denied");
             shopMessage = exception.getMessage();
         }
     }

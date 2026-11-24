@@ -35,7 +35,11 @@ public class ForestGame extends Game {
     private static final String DAYO_SHEET = "images/dayo.png";
     private static final int DAYO_FRAMES = 5;
 
+    /** Music id for each stage, in stage order (audio/music/*.ogg). */
+    private static final String[] STAGE_MUSIC = {"simula", "cave", "forest", "nuno", "duel"};
+
     private AssetLoader assetLoader;
+    private final AudioManager audio = new AudioManager();
     private SpriteBatch batch;
     private BitmapFont font;
     private BitmapFont titleFont;
@@ -66,6 +70,9 @@ public class ForestGame extends Game {
         if (Gdx.input.isKeyJustPressed(Input.Keys.F11) || altEnter) {
             displayToggle.toggleFullscreen();
         }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F9)) {
+            audio.toggleMute();
+        }
 
         int screenWidth = Gdx.graphics.getBackBufferWidth();
         int screenHeight = Gdx.graphics.getBackBufferHeight();
@@ -89,10 +96,12 @@ public class ForestGame extends Game {
         font = Theme.loadFont();
         titleFont = Theme.loadTitleFont();
         setScreen(new MainMenuScreen(this));
+        audio.playMusic("menu");
     }
 
     /** Starts a new run with a fresh Dayo: the introduction first, then Stage 1. */
     public void newGame() {
+        audio.play("ui_select");
         player = new Player(0, 0);
         Texture dayo = assetLoader.loadImage(DAYO_SHEET);
         dayo.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
@@ -102,6 +111,7 @@ public class ForestGame extends Game {
 
     private void playIntro() {
         disposeIntro();
+        audio.playMusic("story");
         String background = Gdx.files.internal(INTRO_BACKGROUND).exists() ? INTRO_BACKGROUND : INTRO_FALLBACK;
         introScene = new CutScene(CutScene.intro(), assetLoader.loadImage(background)) {
             @Override
@@ -139,6 +149,7 @@ public class ForestGame extends Game {
         disposeIntro();
         disposeCurrentStage();
         stageIndex = index;
+        audio.playMusic(STAGE_MUSIC[index]);
         currentStage = createStage(index);
         currentStage.begin();
         setScreen(currentStage);
@@ -147,8 +158,10 @@ public class ForestGame extends Game {
     /** Called by a stage when its goal is met. */
     public void onStageComplete(GameStage stage) {
         if (stageIndex + 1 < STAGE_COUNT) {
+            audio.play("win");
             startStage(stageIndex + 1);
         } else {
+            audio.play("ending");
             // Stage 5 already played the serenade and the ending (Ang Sagot); the journey is over.
             toMainMenu();
         }
@@ -156,15 +169,19 @@ public class ForestGame extends Game {
 
     /** Called by a stage when Dayo falls, runs out of time, or loses all Courage or Sanity. */
     public void onStageFailed(GameStage stage) {
+        audio.stopMusic();
+        audio.play("lose");
         setScreen(new GameOverScreen(this, stage));
     }
 
     public void retryStage(GameStage stage) {
+        audio.playMusic(STAGE_MUSIC[stageIndex]);
         stage.retry();
         setScreen(stage);
     }
 
     public void toMainMenu() {
+        audio.playMusic("menu");
         disposeIntro();
         disposeCurrentStage();
         setScreen(new MainMenuScreen(this));
@@ -179,6 +196,10 @@ public class ForestGame extends Game {
 
     public AssetLoader getAssetLoader() {
         return assetLoader;
+    }
+
+    public AudioManager getAudio() {
+        return audio;
     }
 
     public SpriteBatch getBatch() {
@@ -206,5 +227,6 @@ public class ForestGame extends Game {
         batch.dispose();
         Theme.dispose();
         assetLoader.dispose();
+        audio.dispose();
     }
 }

@@ -5,7 +5,7 @@
 - Use JDK 21. Base package: `com.cupids.curseoftheforest`.
 - From `src/` on Windows: `./gradlew.bat lwjgl3:run` launches the menu; `./gradlew.bat test` runs the tests; `./gradlew.bat build` builds both modules.
 - On macOS/Linux use `./gradlew` instead of `./gradlew.bat`.
-- The suite has 48 tests (Nov 24, 2026). Report actual test counts and failures; do not claim a check passed unless it ran.
+- The suite has 52 tests (Nov 24, 2026). Report actual test counts and failures; do not claim a check passed unless it ran.
 - Use LibGDX only, desktop LWJGL3 only, and simple tile collision. Do not introduce Box2D.
 
 ## Tiled map contract

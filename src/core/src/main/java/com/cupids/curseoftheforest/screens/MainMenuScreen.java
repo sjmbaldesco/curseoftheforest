@@ -46,7 +46,7 @@ public class MainMenuScreen extends ScreenAdapter {
         MenuText.centered(batch, font, "ENTER  New Game", 214, 2f);
         font.setColor(Theme.INK);
         MenuText.centered(batch, font, "ESC  Exit", 166, 2f);
-        MenuText.centered(batch, font, "Move: A/D or arrows    Jump: SPACE/W/UP    Menu: ESC", 60, 1f, Theme.PAPER);
+        MenuText.centered(batch, font, "Move: A/D or arrows    Jump: SPACE/W/UP    Menu: ESC    Full screen: F11", 60, 1f, Theme.PAPER);
         batch.end();
     }
 

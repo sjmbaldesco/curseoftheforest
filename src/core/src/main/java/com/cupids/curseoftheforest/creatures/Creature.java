@@ -15,6 +15,8 @@ public abstract class Creature implements Interactable {
     protected Texture sprite;
     private int frameCount = 1;
     private float animationTime;
+    /** Mirrors the sprite sideways, for creatures that turn to face Dayo. */
+    protected boolean flipX;
 
     protected Creature(String name, float x, float y) {
         if (name == null || name.isBlank()) throw new IllegalArgumentException("Creature needs a name.");
@@ -34,9 +36,14 @@ public abstract class Creature implements Interactable {
         if (sprite != null) {
             int width = sprite.getWidth() / frameCount;
             int frame = (int) (animationTime / 0.18f) % frameCount;
-            batch.draw(sprite, x, y, width, sprite.getHeight(),
-                    frame * width, 0, width, sprite.getHeight(), false, false);
+            batch.draw(sprite, drawX(width), y, width, sprite.getHeight(),
+                    frame * width, 0, width, sprite.getHeight(), flipX, false);
         }
+    }
+
+    /** Left edge of the picture; a creature whose position is its centre overrides this. */
+    protected float drawX(int frameWidth) {
+        return x;
     }
 
     public String getName() {

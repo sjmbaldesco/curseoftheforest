@@ -28,6 +28,11 @@ public abstract class GameStage extends ScreenAdapter {
     /** How far below the map the player can fall before the stage counts as failed. */
     private static final float FALL_LIMIT = -64f;
     private static final String COIN_SHEET = "images/coin-sheet.png";
+    /**
+     * How much of the world the camera shows, compared with the window. At 0.5 the camera sees a
+     * 480 by 270 slice, so every tile and sprite is drawn exactly twice as big (crisp pixel art).
+     */
+    public static final float CAMERA_ZOOM = 0.5f;
 
     protected final ForestGame game;
     protected final String name;
@@ -84,7 +89,7 @@ public abstract class GameStage extends ScreenAdapter {
     /** Enters the stage for the first time: remembers Dayo's state for retries, then sets up. */
     public void begin() {
         // Set up here rather than in the constructor so a stage can be built without graphics (tests).
-        camera.setToOrtho(false, ForestGame.WORLD_WIDTH, ForestGame.WORLD_HEIGHT);
+        camera.setToOrtho(false, ForestGame.WORLD_WIDTH * CAMERA_ZOOM, ForestGame.WORLD_HEIGHT * CAMERA_ZOOM);
         player = game.getPlayer();
         checkpoint = player.saveCheckpoint();
         coinTexture = game.getAssetLoader().loadImage("images/coin.png");
@@ -209,7 +214,13 @@ public abstract class GameStage extends ScreenAdapter {
         }
         player.render(batch);
         batch.end();
+        if (parallax != null) {
+            parallax.renderForeground(batch, camera);
+            // The foreground draws in window space; put the world camera back for the HUD to save.
+            batch.setProjectionMatrix(camera.combined);
+        }
 
+        hud.setDraining(courageDrainPerSecond() > 0, sanityDrainPerSecond() > 0);
         hud.render(batch);
     }
 
@@ -218,9 +229,15 @@ public abstract class GameStage extends ScreenAdapter {
         float halfW = camera.viewportWidth / 2;
         float halfH = camera.viewportHeight / 2;
         float x = player.getX() + Player.WIDTH / 2;
-        camera.position.x = MathUtils.clamp(x, halfW, Math.max(halfW, tileMap.getPixelWidth() - halfW));
-        camera.position.y = MathUtils.clamp(player.getY(), halfH, Math.max(halfH, tileMap.getPixelHeight() - halfH));
+        camera.position.x = snap(MathUtils.clamp(x, halfW, Math.max(halfW, tileMap.getPixelWidth() - halfW)));
+        float y = player.getY() + Player.HEIGHT / 2;
+        camera.position.y = snap(MathUtils.clamp(y, halfH, Math.max(halfH, tileMap.getPixelHeight() - halfH)));
         camera.update();
+    }
+
+    /** Rounds a camera position to a whole window pixel so zoomed pixel art does not shimmer. */
+    private static float snap(float worldPosition) {
+        return Math.round(worldPosition / CAMERA_ZOOM) * CAMERA_ZOOM;
     }
 
     // ---------------------------------------------------------------- state checks

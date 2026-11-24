@@ -26,6 +26,10 @@ public class Player {
     public static final float JUMP_SPEED = 620f;
     public static final float GRAVITY = -1600f;
     public static final float MAX_FALL_SPEED = 900f;
+    /** Seconds each walking picture stays on screen. */
+    private static final float WALK_FRAME_SECONDS = 0.12f;
+    /** Transparent rows under Dayo's feet in his sprite sheet. */
+    private static final float FEET_OFFSET = 3f;
 
     private int courage = MAX_STAT;
     private int sanity = MAX_STAT;
@@ -40,6 +44,9 @@ public class Player {
     private boolean onGround;
     private boolean facingRight = true;
     private Texture sprite;
+    /** Frames in the sprite strip: 1 for a single still image, 5 for Dayo's sheet. */
+    private int frameCount = 1;
+    private float animationTime;
 
     public Player(float x, float y) {
         setPosition(x, y);
@@ -80,6 +87,7 @@ public class Player {
         resolveVertical(map);
 
         bounds.setPosition(x, y);
+        animationTime = (animationTime + delta) % 1000f;
     }
 
     private void resolveHorizontal(TileMap map) {
@@ -129,10 +137,38 @@ public class Player {
         if (sprite == null) {
             return;
         }
-        // Flip the sprite horizontally when facing left.
-        float drawX = facingRight ? x : x + WIDTH;
-        float drawWidth = facingRight ? WIDTH : -WIDTH;
-        batch.draw(sprite, drawX, y, drawWidth, HEIGHT);
+        if (frameCount == 1) {
+            // A single still image is stretched over the collision box (old placeholder art).
+            float drawX = facingRight ? x : x + WIDTH;
+            float drawWidth = facingRight ? WIDTH : -WIDTH;
+            batch.draw(sprite, drawX, y, drawWidth, HEIGHT);
+            return;
+        }
+        // Sheet frames are drawn at their real size, centred on the collision box with the feet on
+        // its bottom edge, so the art can be bigger than the box without changing any collision.
+        int frameSize = sprite.getHeight();
+        int frame = currentFrame();
+        float drawX = x + WIDTH / 2 - frameSize / 2f;
+        batch.draw(sprite, drawX, y - FEET_OFFSET, frameSize, frameSize,
+                frame * frameSize, 0, frameSize, frameSize, !facingRight, false);
+    }
+
+    /**
+     * Which picture of the strip to show: the last frame in the air, a walk cycle through the
+     * others while moving, and the first frame when standing still.
+     */
+    int currentFrame() {
+        if (frameCount == 1) {
+            return 0;
+        }
+        if (!onGround) {
+            return frameCount - 1;
+        }
+        if (velocity.x == 0) {
+            return 0;
+        }
+        int walkFrames = frameCount - 1;
+        return (int) (animationTime / WALK_FRAME_SECONDS) % walkFrames;
     }
 
     // ---------------------------------------------------------------- stats and coins
@@ -207,6 +243,20 @@ public class Player {
 
     public void setSprite(Texture sprite) {
         this.sprite = sprite;
+        frameCount = 1;
+    }
+
+    /**
+     * Uses a horizontal strip of square frames (walk frames, then a jump frame). If the image is
+     * not a clean strip (for example the missing-image placeholder), it is used as one still image.
+     */
+    public void setSpriteSheet(Texture sheet, int frames) {
+        if (sheet == null || frames < 1) {
+            throw new IllegalArgumentException("Sprite sheet and positive frame count are required.");
+        }
+        sprite = sheet;
+        boolean cleanStrip = sheet.getWidth() == sheet.getHeight() * frames;
+        frameCount = cleanStrip ? frames : 1;
     }
 
     public int getCourage() {

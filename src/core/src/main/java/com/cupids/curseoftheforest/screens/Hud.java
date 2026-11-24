@@ -31,6 +31,10 @@ public class Hud {
             "Rosary", "rosary",
             "Lumang Gitara", "lumang-gitara");
 
+    /** True while the stage is draining that stat, so its bar pulses. */
+    private boolean courageDraining;
+    private boolean sanityDraining;
+    private float pulseTime;
     private AssetLoader icons;
     private final Map<String, Texture> iconCache = new HashMap<>();
     private final Matrix4 worldProjection = new Matrix4();
@@ -64,7 +68,14 @@ public class Hud {
         });
     }
 
+    /** Called each frame by the stage, so the player can see which stats the place is eating. */
+    public void setDraining(boolean courage, boolean sanity) {
+        courageDraining = courage;
+        sanityDraining = sanity;
+    }
+
     public void render(SpriteBatch batch) {
+        pulseTime = (pulseTime + Gdx.graphics.getDeltaTime()) % 1000f;
         worldProjection.set(batch.getProjectionMatrix());
         Color color = new Color(font.getColor());
         batch.setProjectionMatrix(screen);
@@ -72,8 +83,8 @@ public class Hud {
         Theme.shade(batch, 0, 478, ForestGame.WORLD_WIDTH, 62);
         font.setColor(Theme.GOLD);
         font.draw(batch, stageName, 16, 534);
-        meter(batch, "Courage", player.getCourage(), 16, Theme.COURAGE);
-        meter(batch, "Sanity", player.getSanity(), 300, Theme.SANITY);
+        meter(batch, "Courage", player.getCourage(), 16, Theme.COURAGE, courageDraining);
+        meter(batch, "Sanity", player.getSanity(), 300, Theme.SANITY, sanityDraining);
         font.setColor(Theme.PAPER);
         font.draw(batch, "Coins: " + player.getCoins(), 600, 500);
         if (timer != null) {
@@ -115,12 +126,16 @@ public class Hud {
         batch.begin();
     }
 
-    /** Filled bar (0 to 100) with its label; turns salmon-red text when low. */
-    private void meter(SpriteBatch batch, String label, int value, float x, Color fill) {
+    /**
+     * Filled bar (0 to 100) with its label; turns salmon-red text when low. While draining, the
+     * border pulses red and the label says so.
+     */
+    private void meter(SpriteBatch batch, String label, int value, float x, Color fill, boolean draining) {
         int clamped = Math.max(0, Math.min(100, value));
         font.setColor(value <= 25 ? Theme.WARNING : Theme.PAPER);
-        font.draw(batch, label + " " + value, x, 516);
-        Theme.rect(batch, Theme.INK, x - 2, 480, 204, 14);
+        font.draw(batch, label + " " + value + (draining ? "  draining" : ""), x, 516);
+        boolean pulseOn = draining && (int) (pulseTime * 3) % 2 == 0;
+        Theme.rect(batch, pulseOn ? Theme.WARNING : Theme.INK, x - 2, 480, 204, 14);
         Theme.rect(batch, Theme.NIGHT, x, 482, 200, 10);
         Theme.rect(batch, value <= 25 ? Theme.WARNING : fill, x, 482, 2f * clamped, 10);
     }

@@ -25,7 +25,8 @@ import java.util.List;
  * he breaks the spell and can leave through the exit.
  *
  * <p>The clock is 3 minutes with the Agimat and 1.5 minutes without it. While it runs, the forest
- * drains Courage and Sanity. A weapon from Tonyo's shop makes each bush faster to search.
+ * drains Courage and Sanity; the Agimat also halves the Sanity drain. A weapon from Tonyo's shop
+ * makes each bush faster to search.
  */
 public class GubatStage extends GameStage {
     /** The clue, one word per hidden piece, in reading order. */
@@ -37,7 +38,9 @@ public class GubatStage extends GameStage {
     private static final float BUSH_SEARCH_SECONDS = 8f;
     private static final int COINS_PER_EMPTY_BUSH = 1;
     private static final float COURAGE_DRAIN = 0.2f;
-    private static final float SANITY_DRAIN = 0.3f;
+    static final float SANITY_DRAIN = 0.8f;
+    /** The Agimat protects the mind: Sanity drains at this share of the normal rate. */
+    static final float AGIMAT_SANITY_SHARE = 0.5f;
     private static final String BUSH_IMAGE = "images/glowing-bush.png";
     private static final String SEARCHED_BUSH_IMAGE = "images/glowing-bush-searched.png";
 
@@ -56,6 +59,11 @@ public class GubatStage extends GameStage {
     /** Stage 3's time limit: the Agimat doubles it. */
     static float timeLimitFor(Player p) {
         return p.getInventory().has(Shop.AGIMAT) ? TIME_WITH_AGIMAT : TIME_WITHOUT_AGIMAT;
+    }
+
+    /** Sanity lost per second while the Tikbalang's clock runs: halved by the Agimat. */
+    static float sanityDrainFor(Player p) {
+        return p.getInventory().has(Shop.AGIMAT) ? SANITY_DRAIN * AGIMAT_SANITY_SHARE : SANITY_DRAIN;
     }
 
     @Override
@@ -82,7 +90,7 @@ public class GubatStage extends GameStage {
         }
         pieces.clear();
         message = player.getInventory().has(Shop.AGIMAT)
-                ? "The Agimat glows. Walk to the Tikbalang and press E."
+                ? "The Agimat glows: your mind is shielded. Walk to the Tikbalang and press E."
                 : "Walk to the Tikbalang and press E.";
     }
 
@@ -166,7 +174,7 @@ public class GubatStage extends GameStage {
 
     @Override
     protected float sanityDrainPerSecond() {
-        return timer != null && timer.isRunning() && !hasAllPieces() ? SANITY_DRAIN : 0f;
+        return timer != null && timer.isRunning() && !hasAllPieces() ? sanityDrainFor(player) : 0f;
     }
 
     // ---------------------------------------------------------------- drawing

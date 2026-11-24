@@ -22,6 +22,7 @@ public class Wakwak extends Creature {
 
     @Override
     public void update(float delta) {
+        super.update(delta); // keeps the wings flapping
         if (target == null) {
             return;
         }
@@ -30,6 +31,16 @@ public class Wakwak extends Creature {
         flightStep.limit(FLIGHT_SPEED * delta);
         x += flightStep.x;
         y += flightStep.y;
+        if (flightStep.x != 0) {
+            // The sheet faces left; mirror it while flying right.
+            flipX = flightStep.x > 0;
+        }
+    }
+
+    /** The Wakwak's position is the middle of its body, so centre the picture on it. */
+    @Override
+    protected float drawX(int frameWidth) {
+        return x - frameWidth / 2f;
     }
 
     public boolean hasCaughtDayo() {

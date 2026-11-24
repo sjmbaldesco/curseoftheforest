@@ -5,15 +5,15 @@
 - Use JDK 21. Base package: `com.cupids.curseoftheforest`.
 - From `src/` on Windows: `./gradlew.bat lwjgl3:run` launches the menu; `./gradlew.bat test` runs the tests; `./gradlew.bat build` builds both modules.
 - On macOS/Linux use `./gradlew` instead of `./gradlew.bat`.
-- The suite has 43 tests (Nov 24, 2026). Report actual test counts and failures; do not claim a check passed unless it ran.
+- The suite has 48 tests (Nov 24, 2026). Report actual test counts and failures; do not claim a check passed unless it ran.
 - Use LibGDX only, desktop LWJGL3 only, and simple tile collision. Do not introduce Box2D.
 
 ## Tiled map contract
 - Tiles are 32 by 32 pixels.
 - Tile layer `solid`: any tile blocks movement.
 - Object layer `coins`: rectangle objects represent coins.
-- Object layer `markers`: rectangles named `spawn` and `exit`. Stages may add other named markers (Stage 3 uses `tikbalang`), read with `TileMap.getMarker(name)`.
-- Optional extra object layers are read with `TileMap.getObjects(layer)`; Stage 3 uses `bushes`.
+- Object layer `markers`: rectangles named `spawn` and `exit`. Stages may add other named markers (Stage 2 uses `tonyo` and `cave`, Stage 3 uses `tikbalang`), read with `TileMap.getMarker(name)`.
+- Optional extra object layers are read with `TileMap.getObjects(layer)`; Stage 2 uses `torches` and `wakwak`, Stage 3 uses `bushes`.
 - Preserve this contract; see `src/assets/maps/test.tmx` and `gubat.tmx`.
 
 ## Ownership
@@ -87,10 +87,10 @@ Every `.tmx` in `src/assets/maps/` must have:
 
 - tile layer `solid`: any tile there blocks movement
 - object layer `coins`: rectangles, one per coin
-- object layer `markers`: rectangles named `spawn` and `exit` (plus any stage-specific names, e.g. `tikbalang`)
+- object layer `markers`: rectangles named `spawn` and `exit` (plus any stage-specific names, e.g. `tonyo`, `cave`, `tikbalang`)
 - 32 px tiles
 
-Stage-specific object layers are allowed (Stage 3: `bushes`). Optional image layers are decorative only.
+Stage-specific object layers are allowed (Stage 2: `torches`, `wakwak`; Stage 3: `bushes`). Optional image layers are decorative only.
 `src/assets/maps/test.tmx` is the reference. If a stage needs a new layer, add it to this list and to `README.md`.
 
 ## Class ownership

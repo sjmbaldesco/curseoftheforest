@@ -30,7 +30,7 @@ Filipino students and casual players interested in Philippine folklore and cultu
 - Lola Pacita's gifts (Rosary, Lumang Gitara) and Duwende Tonyo's shop with an inventory. The cave holds at most 10 coins, so Dayo must choose what to buy.
 - One mini-game per stage:
   1. **Ang Simula:** repeat Lola Pacita's color sequence.
-  2. **Ang Palengke ng Duwende:** collect coins while the Wakwak chases you, then shop.
+  2. **Ang Palengke ng Duwende (Test of Courage):** cross the forest edge, meet Duwende Tonyo, then spend 3 minutes in the Wakwak Cave grabbing coins while a swarm hunts you. Torches burn for 5 s when touched (10 s to relight) and slow any Wakwak in their light. Spend the coins at Tonyo's shop.
   3. **Ang Gubat ng Tikbalang:** talk to the Tikbalang to start the clock, then hold E at glowing bushes to find the three pieces of the clue *"Baliktarin ang damit"* and escape.
   4. **Tulay ng Nuno sa Punso:** offer the right food for three riddles to earn three potions.
   5. **Ang Tukso ng Mangkukulam:** potion duel. Stun beats Damage, Damage beats Heal, Heal beats Stun. The witch hides her pick.
@@ -108,7 +108,7 @@ Tiled maps must have:
 - an object layer `coins` (rectangles);
 - an object layer `markers` with rectangles named `spawn` and `exit`.
 
-A stage may add its own named markers and object layers. Stage 3 (`gubat.tmx`) adds a `tikbalang` marker and a `bushes` layer. Image layers are decorative only. See `src/assets/maps/test.tmx`.
+A stage may add its own named markers and object layers. Stage 2 (`palengke.tmx`) adds `tonyo` and `cave` markers and `torches` and `wakwak` (roost) layers. Stage 3 (`gubat.tmx`) adds a `tikbalang` marker and a `bushes` layer. Image layers are decorative only. See `src/assets/maps/test.tmx`.
 
 ## Team members and roles
 
@@ -127,11 +127,11 @@ A stage may add its own named markers and object layers. Stage 3 (`gubat.tmx`) a
 | Abstraction | `GameStage`, `Item` and `Creature` are abstract; `Interactable` is an interface shared by creatures and `GlowingBush` (a bush is not a creature, but Dayo interacts with both the same way). |
 | Polymorphism | `ForestGame` holds the current stage as a `GameStage` and LibGDX calls `render()` on it; each stage overrides `init()`, `update()` and `handleInput()`, and Stage 3 overrides the drain hooks `courageDrainPerSecond()`/`sanityDrainPerSecond()`. `Item.use()` and `Interactable.interact()` are overridden per class: Tonyo opens the shop, Nuno asks riddles, the Tikbalang starts the timer, a bush starts a search. |
 | Exception handling | `AssetLoader` catches missing images and uses a placeholder; `Player.useItem()` rejects items not in the inventory; `InsufficientCoinsException` for the shop. |
-| Arrays and collections | `TileMap` copies the Tiled `solid` layer into a `boolean[][]` for collision; arrays hold the Stage 1 color pattern and the Stage 3 clue; `ArrayList` for coins, inventory, shop stock, bushes and the collected clue pieces. |
+| Arrays and collections | `TileMap` copies the Tiled `solid` layer into a `boolean[][]` for collision; arrays hold the Stage 1 color pattern and the Stage 3 clue; `ArrayList` for coins, inventory, shop stock, bushes, torches, the Wakwak swarm and the collected clue pieces. |
 
 ## Testing
 
-`./gradlew test` (from `src/`) runs 43 JUnit 5 tests covering:
+`./gradlew test` (from `src/`) runs 48 JUnit 5 tests covering:
 
 - player movement, collision and stats;
 - the stage timer (including the paused Stage 3 clock);
@@ -139,6 +139,7 @@ A stage may add its own named markers and object layers. Stage 3 (`gubat.tmx`) a
 - Tiled map markers and the `gubat.tmx` map contract;
 - bush searching with and without weapons, and the Tikbalang starting the timer;
 - the dialogue box (typing, paging, questions that do not pause) and fading notices;
+- Wakwak Cave torches (5 s burn, 10 s relight, light radius), the swarm's slowdown and retreat, the Rosary, and the cave map contract;
 - the Agimat timer and Sanity shield, riddles, cutscenes and the potion duel (including a duel Dayo can lose).
 
 Every stage was also smoke-run from the intro to the duel before release.

@@ -45,8 +45,12 @@ public class CutScene extends ScreenAdapter {
     @Override
     public void render(float delta) {
         if (batch == null) show();
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
-                || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) advance();
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            currentIndex = lines.length;
+        } else if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
+                || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            advance();
+        }
         if (isFinished() && onFinished != null) {
             Runnable action = onFinished;
             onFinished = null;
@@ -59,6 +63,8 @@ public class CutScene extends ScreenAdapter {
         if (background != null) batch.draw(background, 0, 0, 960, 540);
         // Caption in the talk-box frame along the bottom (mockup 11).
         UiSkin.frame(batch, UiSkin.Frame.TALKBOX, 40, 32, 880, 116);
+        UiSkin.frame(batch, UiSkin.Frame.PANEL, 758, 494, 184, 30);
+        Theme.textCentred(batch, Theme.Size.SMALL, "[ESC] Skip", 850, 514, Theme.GOLD);
         font.setColor(Theme.PAPER);
         font.draw(batch, getCurrentLine(), 72, 130, 816, Align.left, true);
         Theme.textRight(batch, Theme.Size.BODY, "[ENTER] continue", 880, 58, Theme.GOLD);

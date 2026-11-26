@@ -113,16 +113,7 @@ public class ForestGame extends Game {
         disposeIntro();
         audio.playMusic("story");
         String background = Gdx.files.internal(INTRO_BACKGROUND).exists() ? INTRO_BACKGROUND : INTRO_FALLBACK;
-        introScene = new CutScene(CutScene.intro(), assetLoader.loadImage(background)) {
-            @Override
-            public void render(float delta) {
-                if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-                    toMainMenu();
-                    return;
-                }
-                super.render(delta);
-            }
-        };
+        introScene = new CutScene(CutScene.intro(), assetLoader.loadImage(background));
         introScene.setOnFinished(() -> startStage(0));
         setScreen(introScene);
     }

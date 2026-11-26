@@ -122,7 +122,6 @@ public class MangkukulamStage extends GameStage {
     @Override
     public void render(float delta) {
         if (scene != null) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) { game.toMainMenu(); return; }
             scene.render(delta);
             if (scene.isFinished()) {
                 scene.dispose();

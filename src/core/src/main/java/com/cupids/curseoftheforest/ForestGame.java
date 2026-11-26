@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.cupids.curseoftheforest.player.Player;
 import com.cupids.curseoftheforest.screens.CutScene;
+import com.cupids.curseoftheforest.screens.DialogueBox;
 import com.cupids.curseoftheforest.screens.GameOverScreen;
 import com.cupids.curseoftheforest.screens.Letterbox;
 import com.cupids.curseoftheforest.screens.MainMenuScreen;
@@ -114,6 +115,9 @@ public class ForestGame extends Game {
         audio.playMusic("story");
         String background = Gdx.files.internal(INTRO_BACKGROUND).exists() ? INTRO_BACKGROUND : INTRO_FALLBACK;
         introScene = new CutScene(CutScene.intro(), assetLoader.loadImage(background));
+        introScene.setPortrait("Dayo", DialogueBox.portraitFrom(assetLoader.loadImage(DAYO_SHEET), DAYO_FRAMES));
+        introScene.setPortrait("Lola Pacita", DialogueBox.portraitFrom(
+                assetLoader.loadImage("images/lola-pacita.png"), DAYO_FRAMES));
         introScene.setOnFinished(() -> startStage(0));
         setScreen(introScene);
     }

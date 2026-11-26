@@ -52,6 +52,7 @@ public class GubatStage extends GameStage {
     private final List<String> pieces = new ArrayList<>();
     private Texture pixel;
     private TextureRegion tikbalangPortrait;
+    private TextureRegion dayoPortrait;
     private boolean hasBushSprite;
 
     public GubatStage(ForestGame game) {
@@ -81,6 +82,8 @@ public class GubatStage extends GameStage {
         Texture tikbalangSheet = game.getAssetLoader().loadImage("images/tikbalang.png");
         tikbalang.setSpriteSheet(tikbalangSheet, 5);
         tikbalangPortrait = DialogueBox.portraitFrom(tikbalangSheet, 5);
+        dayoPortrait = DialogueBox.portraitFrom(
+                game.getAssetLoader().loadImage("images/dayo.png"), 5);
 
         hasBushSprite = Gdx.files.internal(BUSH_IMAGE).exists();
         Animation<TextureRegion> bushIdle = game.getAssetLoader().loadStrip(BUSH_IDLE_SHEET, 64, 0.15f);
@@ -188,7 +191,7 @@ public class GubatStage extends GameStage {
         pieces.add(piece);
         sfx("piece");
         if (hasAllPieces()) {
-            dialogue.say("Dayo", null, "\"Baliktarin ang damit!\" Dayo turns his shirt inside out.",
+            dialogue.say("Dayo", dayoPortrait, "\"Baliktarin ang damit!\" Dayo turns his shirt inside out.",
                     "The forest stops spinning. The spell is broken. Run to the exit!");
         } else {
             toast.show("You found a piece of the clue: \"" + piece + "\"");

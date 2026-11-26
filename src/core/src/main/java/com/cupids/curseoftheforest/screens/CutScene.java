@@ -6,13 +6,18 @@ import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ScreenUtils;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /** Dialogue state can be tested without graphics; drawing resources are allocated on show. */
 public class CutScene extends ScreenAdapter {
     private final String[] lines;
+    private final Map<String, TextureRegion> portraits = new LinkedHashMap<>();
+    private final Map<String, Texture> characters = new LinkedHashMap<>();
     private int currentIndex;
     private final Texture background;
     private SpriteBatch batch;
@@ -35,6 +40,16 @@ public class CutScene extends ScreenAdapter {
      * after that, so the action may switch screens and dispose this scene.
      */
     public void setOnFinished(Runnable action) { onFinished = action; }
+    /** Associates a speaker name with the portrait shown on that speaker's dialogue lines. */
+    public void setPortrait(String speaker, TextureRegion portrait) {
+        speaker = Objects.requireNonNull(speaker, "speaker");
+        portrait = Objects.requireNonNull(portrait, "portrait");
+        portraits.put(speaker, portrait);
+        Texture texture = portrait.getTexture();
+        if (texture.getHeight() == 64 && texture.getWidth() >= 64) {
+            characters.put(speaker, texture);
+        }
+    }
     public String getCurrentLine() { return isFinished() ? "" : lines[currentIndex]; }
 
     @Override
@@ -45,8 +60,12 @@ public class CutScene extends ScreenAdapter {
     @Override
     public void render(float delta) {
         if (batch == null) show();
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
-                || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) advance();
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            currentIndex = lines.length;
+        } else if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
+                || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            advance();
+        }
         if (isFinished() && onFinished != null) {
             Runnable action = onFinished;
             onFinished = null;
@@ -57,10 +76,23 @@ public class CutScene extends ScreenAdapter {
         ScreenUtils.clear(Theme.NIGHT);
         MenuText.begin(batch);
         if (background != null) batch.draw(background, 0, 0, 960, 540);
+        String line = getCurrentLine();
+        drawCharacters(batch, speakerFor(line));
         // Caption in the talk-box frame along the bottom (mockup 11).
         UiSkin.frame(batch, UiSkin.Frame.TALKBOX, 40, 32, 880, 116);
+        UiSkin.frame(batch, UiSkin.Frame.PANEL, 758, 494, 184, 30);
+        Theme.textCentred(batch, Theme.Size.SMALL, "[ESC] Skip", 850, 514, Theme.GOLD);
+        TextureRegion portrait = portraits.get(speakerFor(line));
+        float textX = 72;
+        float textWidth = 816;
+        if (portrait != null) {
+            UiSkin.frame(batch, UiSkin.Frame.PORTRAIT, 52, 50, 80, 80);
+            batch.draw(portrait, 60, 58, 64, 64);
+            textX = 152;
+            textWidth = 736;
+        }
         font.setColor(Theme.PAPER);
-        font.draw(batch, getCurrentLine(), 72, 130, 816, Align.left, true);
+        font.draw(batch, line, textX, 130, textWidth, Align.left, true);
         Theme.textRight(batch, Theme.Size.BODY, "[ENTER] continue", 880, 58, Theme.GOLD);
         if ((int) (blink * 2) % 2 == 0) {
             UiSkin.triangle(batch, Theme.GOLD, 888, 52);
@@ -68,7 +100,36 @@ public class CutScene extends ScreenAdapter {
         batch.end();
     }
 
+    private void drawCharacters(SpriteBatch batch, String speaker) {
+        Texture left = characters.get(speaker);
+        String leftName = speaker;
+        if (left == null && !characters.isEmpty()) {
+            Map.Entry<String, Texture> first = characters.entrySet().iterator().next();
+            leftName = first.getKey();
+            left = first.getValue();
+        }
+
+        Texture right = null;
+        for (Map.Entry<String, Texture> entry : characters.entrySet()) {
+            if (!entry.getKey().equals(leftName)) {
+                right = entry.getValue();
+                break;
+            }
+        }
+        if (left != null) {
+            batch.draw(left, 0, 32, 320, 320, 0, 0, 64, 64, true, false);
+        }
+        if (right != null) {
+            batch.draw(right, 640, 32, 320, 320, 0, 0, 64, 64, false, false);
+        }
+    }
+
     public boolean isFinished() { return currentIndex >= lines.length; }
+
+    private static String speakerFor(String line) {
+        int separator = line.indexOf(':');
+        return separator > 0 ? line.substring(0, separator).trim() : "";
+    }
 
     @Override
     public void dispose() {

@@ -61,6 +61,12 @@ public class TulayStage extends GameStage {
         // The flashback plays once; a retry goes straight back to the riddles.
         scene = retried ? null
                 : new CutScene(CutScene.flashbackOne(), game.getAssetLoader().loadImage("images/backgrounds/flashback-1.png"));
+        if (scene != null) {
+            scene.setPortrait("Dayo", DialogueBox.portraitFrom(
+                    game.getAssetLoader().loadImage("images/dayo.png"), 5));
+            scene.setPortrait("Lola Pacita", DialogueBox.portraitFrom(
+                    game.getAssetLoader().loadImage("images/lola-pacita.png"), 5));
+        }
         nuno = new Nuno(320, 256);
         Texture nunoSheet = game.getAssetLoader().loadImage("images/characters/nuno.png");
         nuno.setSpriteSheet(nunoSheet, 5);

@@ -48,6 +48,7 @@ public class MangkukulamStage extends GameStage {
         // The flashback plays once; a retry goes straight back to the duel.
         scene = retried ? null
                 : new CutScene(CutScene.flashbackTwo(), game.getAssetLoader().loadImage("images/backgrounds/flashback-2.png"));
+        if (scene != null) addStoryPortraits(scene);
         sceneIndex = retried ? 1 : 0;
         witch = new Mangkukulam(480, 192);
         Texture witchSheet = game.getAssetLoader().loadImage("images/characters/mangkukulam.png");
@@ -115,6 +116,7 @@ public class MangkukulamStage extends GameStage {
             boolean hasGuitarStrings = player.getInventory().has(Shop.KWERDAS);
             scene = new CutScene(CutScene.serenade(hasGuitarStrings),
                     game.getAssetLoader().loadImage("images/backgrounds/serenade.png"));
+            addStoryPortraits(scene);
             sceneIndex = 2;
         }
     }
@@ -122,7 +124,6 @@ public class MangkukulamStage extends GameStage {
     @Override
     public void render(float delta) {
         if (scene != null) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) { game.toMainMenu(); return; }
             scene.render(delta);
             if (scene.isFinished()) {
                 scene.dispose();
@@ -130,6 +131,7 @@ public class MangkukulamStage extends GameStage {
                 if (sceneIndex == 0) sceneIndex = 1;
                 else if (sceneIndex == 2) {
                     scene = new CutScene(CutScene.ending(), game.getAssetLoader().loadImage("images/backgrounds/ending.png"));
+                    addStoryPortraits(scene);
                     sceneIndex = 3;
                 } else {
                     completed = true;
@@ -139,6 +141,13 @@ public class MangkukulamStage extends GameStage {
             return;
         }
         super.render(delta);
+    }
+
+    private void addStoryPortraits(CutScene cutScene) {
+        cutScene.setPortrait("Dayo", DialogueBox.portraitFrom(
+                game.getAssetLoader().loadImage("images/dayo.png"), 5));
+        cutScene.setPortrait("Luningning", DialogueBox.portraitFrom(
+                game.getAssetLoader().loadImage("images/luningning.png"), 5));
     }
 
     /** Sets the goal line while the duel runs and after it ends. */

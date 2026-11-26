@@ -30,8 +30,7 @@ public class Player {
     private static final float WALK_FRAME_SECONDS = 0.12f;
     /** Transparent rows under Dayo's feet in his sprite sheet. */
     private static final float FEET_OFFSET = 3f;
-    /** Dayo's sheet (images/dayo.png) is drawn facing left, so it is mirrored when he walks right. */
-    static final boolean SHEET_FACES_LEFT = true;
+    /** The sheet has two left-facing frames, two right-facing frames, then a right-facing jump pose. */
 
     private int courage = MAX_STAT;
     private int sanity = MAX_STAT;
@@ -151,13 +150,14 @@ public class Player {
         int frameSize = sprite.getHeight();
         int frame = currentFrame();
         float drawX = x + WIDTH / 2 - frameSize / 2f;
+        boolean flipJump = frame == frameCount - 1 && !facingRight;
         batch.draw(sprite, drawX, y - FEET_OFFSET, frameSize, frameSize,
-                frame * frameSize, 0, frameSize, frameSize, facingRight == SHEET_FACES_LEFT, false);
+                frame * frameSize, 0, frameSize, frameSize, flipJump, false);
     }
 
     /**
-     * Which picture of the strip to show: the last frame in the air, a walk cycle through the
-     * others while moving, and the first frame when standing still.
+     * Which picture of the strip to show: the final frame while airborne, then the matching
+     * two-frame walk cycle for Dayo's facing direction. The sheet stores left and right separately.
      */
     int currentFrame() {
         if (frameCount == 1) {
@@ -166,11 +166,15 @@ public class Player {
         if (!onGround) {
             return frameCount - 1;
         }
-        if (velocity.x == 0) {
+        int walkFramesPerDirection = (frameCount - 1) / 2;
+        if (walkFramesPerDirection == 0) {
             return 0;
         }
-        int walkFrames = frameCount - 1;
-        return (int) (animationTime / WALK_FRAME_SECONDS) % walkFrames;
+        int firstFrame = facingRight ? walkFramesPerDirection : 0;
+        if (velocity.x == 0) {
+            return firstFrame;
+        }
+        return firstFrame + (int) (animationTime / WALK_FRAME_SECONDS) % walkFramesPerDirection;
     }
 
     // ---------------------------------------------------------------- stats and coins

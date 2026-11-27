@@ -61,6 +61,7 @@ public class PalengkeStage extends GameStage {
     private boolean warnedHurry;
     private float catchCooldown;
     private boolean reachedShop;
+    private boolean leavingShop;
     private String shopMessage;
     private Texture glow;
     private float flicker;
@@ -121,6 +122,7 @@ public class PalengkeStage extends GameStage {
         warnedHurry = false;
         catchCooldown = 0f;
         reachedShop = false;
+        leavingShop = false;
         shopMessage = "";
         setGoal(talkedToTonyo ? "Enter the Wakwak Cave" : "Cross the forest edge to Tonyo's stall");
     }
@@ -167,7 +169,14 @@ public class PalengkeStage extends GameStage {
             toast.warn("The swarm is getting restless. Hurry!");
         }
         if (reachedExit() && !isFailed()) {
-            reachedShop = true;
+            if (!reachedShop) {
+                reachedShop = true;
+                inCave = false;
+                player.setPosition(tonyo.getX() - Player.WIDTH - 24, tonyo.getY());
+                setGoal("Spend your cave coins at Tonyo's stall");
+                dialogue.say(tonyo.getName(), tonyoPortrait,
+                        "Ha! You came back with all your fingers. Let's see those coins.");
+            }
         }
     }
 
@@ -184,7 +193,7 @@ public class PalengkeStage extends GameStage {
     @Override
     protected void handleInput() {
         if (reachedShop) {
-            handleShopInput();
+            if (!leavingShop && !dialogue.isBlocking()) handleShopInput();
             return;
         }
         if (talkedToTonyo) {
@@ -219,7 +228,10 @@ public class PalengkeStage extends GameStage {
 
     private void handleShopInput() {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
-            completed = true;
+            leavingShop = true;
+            dialogue.say(tonyo.getName(), tonyoPortrait,
+                    "The forest ahead plays tricks on the mind. Don't trust the path you walk twice.");
+            dialogue.setOnClose(() -> completed = true);
             return;
         }
 
@@ -272,7 +284,7 @@ public class PalengkeStage extends GameStage {
 
     @Override
     public void render(float delta) {
-        if (reachedShop) {
+        if (reachedShop && !dialogue.isBlocking() && !leavingShop) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
                 game.toMainMenu();
                 return;
